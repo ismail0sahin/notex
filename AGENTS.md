@@ -24,6 +24,15 @@ Arayüz metinleri Türkçe.
   tablosunda tutulmaz. Detay ekranındaki değişiklikler anında kaydedilir, Kaydet düğmesi yok.
 - Ekran geçişleri `Modal` ile yapılıyor, ayrı route açılmıyor — `NativeTabs` altında
   sekme olmayan route'lar sorun çıkarıyor.
+- `src/components/slide-panel.tsx` — not ve plan sayfalarını sağdan kaydırarak açar.
+  `Modal`'ın `animationType="slide"`'ı Android'de alttan getiriyor, o yüzden geçiş
+  Reanimated ile elle yazıldı. Çıkış animasyonu görünsün diye Modal, animasyon
+  bitene kadar `mounted` ile ayakta tutuluyor; bu kaldırılırsa panel çıkışta
+  aniden yok olur.
+- `plans.due_date` kolonu duruyor ama arayüzde kullanılmıyor. Bugün/Yarın/Tarihsiz
+  düğmeleri kaldırıldı; yeni planlar `null` tarihle açılıyor. Tarih geri istenirse
+  `@react-native-community/datetimepicker` zaten kurulu, `mode="date"` ile gerçek
+  bir tarih seçici bağlanabilir.
 - `src/components/app-tabs.tsx` — sekmeler (`NativeTabs`). Sekme adı dosya adıyla eşleşmeli.
 - `src/hooks/use-list-mode.ts` — listelerin üç durumu: `normal`, `select`, `reorder`.
   Uzun basış moda göre farklı iş yapıyor (normalde seçim açar, sıralamada sürükler),
@@ -66,6 +75,21 @@ Expo Go **54.0.8** elle kurulu ve Play Store otomatik güncellemesi kapalı olma
 `eas.json`'daki `development` profili `expo-dev-client` paketini ister; o paket
 kaldırıldı (kurulu olması `npm start`'ı Expo Go yerine geliştirme derlemesi moduna
 çeviriyor). Geliştirme derlemesine dönülürse paket yeniden kurulmalı.
+
+## Plan türleri
+
+`plans.kind` iki değer alır: `checklist` ve `schedule`. Çizelgede her satırın
+`start_time` / `end_time` alanı olabilir (`'HH:MM'` metni ya da null); görev
+listesinde bu alanlar boş kalır. Tek tablo, nullable kolonlar — iki ayrı görev
+tablosu tutmanın karşılığı yok.
+
+Saat girişi `@react-native-community/datetimepicker` ile Android'in kendi
+seçicisini açıyor. Elle "09:30" yazdırmak telefonda hataya davetiye; ayrıca
+seçicinin `neutralButton`'u "Temizle" olarak bağlı, yani girilen saat geri alınabilir.
+
+Çizelge satırları saate göre otomatik sıralanmıyor, `position` sırasında kalıyor.
+Otomatik sıralama elle taşımayla çatışıyor (aşağıdaki bölüm). Bu bilinçli bir
+tercih; değiştirilecekse sürüklemenin o tür için ne anlama geldiği yeniden düşünülmeli.
 
 ## Sıralama
 

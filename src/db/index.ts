@@ -1,7 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 export const DATABASE_NAME = 'notex.db';
-const DATABASE_VERSION = 3;
+const DATABASE_VERSION = 4;
 
 export type Note = {
   id: number;
@@ -12,10 +12,18 @@ export type Note = {
   position: number;
 };
 
+/**
+ * İki tür plan var:
+ * - `checklist`: sade görev listesi, tik at geç.
+ * - `schedule`: çizelge; her satırın başlangıç ve bitiş saati olabilir.
+ */
+export type PlanKind = 'checklist' | 'schedule';
+
 export type Plan = {
   id: number;
   title: string;
   due_date: string | null;
+  kind: PlanKind;
   created_at: string;
   position: number;
 };
@@ -24,6 +32,9 @@ export type Plan = {
 export type PlanWithProgress = Plan & {
   task_count: number;
   done_count: number;
+  /** Çizelgelerde günün kapsamını göstermek için. */
+  first_start: string | null;
+  last_end: string | null;
 };
 
 export type Task = {
@@ -31,6 +42,9 @@ export type Task = {
   plan_id: number;
   title: string;
   done: number;
+  /** 'HH:MM' ya da null. Yalnızca çizelge planlarında kullanılır. */
+  start_time: string | null;
+  end_time: string | null;
   created_at: string;
   position: number;
 };
@@ -121,6 +135,16 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
     currentDbVersion = 3;
   }
 
+  if (currentDbVersion === 3) {
+    // Plan türü ve çizelge saatleri. Var olan planlar checklist sayılır.
+    await db.execAsync(`
+      ALTER TABLE plans ADD COLUMN kind TEXT NOT NULL DEFAULT 'checklist';
+      ALTER TABLE tasks ADD COLUMN start_time TEXT;
+      ALTER TABLE tasks ADD COLUMN end_time TEXT;
+    `);
+    currentDbVersion = 4;
+  }
+
   await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
 }
 
@@ -190,7 +214,11 @@ export function listPlans(db: SQLiteDatabase) {
     `SELECT
        p.*,
        (SELECT COUNT(*) FROM tasks t WHERE t.plan_id = p.id) AS task_count,
-       (SELECT COUNT(*) FROM tasks t WHERE t.plan_id = p.id AND t.done = 1) AS done_count
+       (SELECT COUNT(*) FROM tasks t WHERE t.plan_id = p.id AND t.done = 1) AS done_count,
+       (SELECT MIN(t.start_time) FROM tasks t
+         WHERE t.plan_id = p.id AND t.start_time IS NOT NULL) AS first_start,
+       (SELECT MAX(t.end_time) FROM tasks t
+         WHERE t.plan_id = p.id AND t.end_time IS NOT NULL) AS last_end
      FROM plans p
      ORDER BY p.position ASC, p.id ASC`
   );
@@ -201,24 +229,25 @@ export function getPlan(db: SQLiteDatabase, id: number) {
 }
 
 /** Yeni plan listenin başına gelir. */
-export async function createPlan(db: SQLiteDatabase, title: string, dueDate: string | null) {
+export async function createPlan(
+  db: SQLiteDatabase,
+  title: string,
+  dueDate: string | null,
+  kind: PlanKind
+) {
   const result = await db.runAsync(
-    `INSERT INTO plans (title, due_date, created_at, position)
-     VALUES (?, ?, ?, (SELECT COALESCE(MIN(position), 0) - 1 FROM plans))`,
+    `INSERT INTO plans (title, due_date, kind, created_at, position)
+     VALUES (?, ?, ?, ?, (SELECT COALESCE(MIN(position), 0) - 1 FROM plans))`,
     title,
     dueDate,
+    kind,
     now()
   );
   return result.lastInsertRowId;
 }
 
-export function updatePlan(
-  db: SQLiteDatabase,
-  id: number,
-  title: string,
-  dueDate: string | null
-) {
-  return db.runAsync('UPDATE plans SET title = ?, due_date = ? WHERE id = ?', title, dueDate, id);
+export function updatePlanTitle(db: SQLiteDatabase, id: number, title: string) {
+  return db.runAsync('UPDATE plans SET title = ? WHERE id = ?', title, id);
 }
 
 /** tasks tablosu ON DELETE CASCADE ile birlikte temizlenir. */
@@ -261,6 +290,17 @@ export function createTask(db: SQLiteDatabase, planId: number, title: string) {
 
 export function updateTask(db: SQLiteDatabase, id: number, title: string) {
   return db.runAsync('UPDATE tasks SET title = ? WHERE id = ?', title, id);
+}
+
+/** Çizelge saatleri. Kolon adı bu iki seçenekten geliyor, kullanıcı girdisi değil. */
+export function setTaskTime(
+  db: SQLiteDatabase,
+  id: number,
+  field: 'start' | 'end',
+  value: string | null
+) {
+  const column = field === 'start' ? 'start_time' : 'end_time';
+  return db.runAsync(`UPDATE tasks SET ${column} = ? WHERE id = ?`, value, id);
 }
 
 export function setTaskDone(db: SQLiteDatabase, id: number, done: boolean) {

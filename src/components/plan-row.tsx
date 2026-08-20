@@ -7,7 +7,6 @@ import { Spacing } from '@/constants/theme';
 import type { PlanWithProgress } from '@/db';
 import type { ListMode } from '@/hooks/use-list-mode';
 import { useTheme } from '@/hooks/use-theme';
-import { formatDue, isOverdue } from '@/lib/date';
 
 export function PlanRow({
   plan,
@@ -28,9 +27,14 @@ export function PlanRow({
   const drag = useReorderableDrag();
 
   const complete = plan.task_count > 0 && plan.done_count === plan.task_count;
-  const dueLabel = formatDue(plan.due_date);
-  const overdue = !complete && isOverdue(plan.due_date);
   const progress = plan.task_count === 0 ? 0 : plan.done_count / plan.task_count;
+
+  // Çizelgelerde günün kapsamı; saat girilmemişse yalnızca tür adı görünür.
+  const span =
+    plan.first_start && plan.last_end ? `${plan.first_start} – ${plan.last_end}` : 'Çizelge';
+  const counts =
+    plan.task_count === 0 ? 'Görev yok' : `${plan.done_count}/${plan.task_count} görev tamam`;
+  const secondary = plan.kind === 'schedule' ? `${span} · ${counts}` : counts;
 
   const handlePress = () => {
     if (mode === 'select') onToggle();
@@ -55,27 +59,15 @@ export function PlanRow({
         },
       ]}>
       <View style={styles.body}>
-        <View style={styles.rowTop}>
-          <ThemedText
-            numberOfLines={2}
-            themeColor={complete ? 'textSecondary' : 'text'}
-            style={[styles.title, complete && styles.completeTitle]}>
-            {plan.title}
-          </ThemedText>
-          {dueLabel ? (
-            <ThemedText
-              type="small"
-              themeColor="textSecondary"
-              style={overdue ? { color: theme.danger } : undefined}>
-              {dueLabel}
-            </ThemedText>
-          ) : null}
-        </View>
+        <ThemedText
+          numberOfLines={2}
+          themeColor={complete ? 'textSecondary' : 'text'}
+          style={complete && styles.completeTitle}>
+          {plan.title}
+        </ThemedText>
 
         <ThemedText type="small" themeColor="textSecondary">
-          {plan.task_count === 0
-            ? 'Görev yok'
-            : `${plan.done_count}/${plan.task_count} görev tamam`}
+          {secondary}
         </ThemedText>
 
         {plan.task_count > 0 ? (
@@ -109,15 +101,6 @@ const styles = StyleSheet.create({
   body: {
     flex: 1,
     gap: Spacing.two,
-  },
-  rowTop: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: Spacing.three,
-  },
-  title: {
-    flex: 1,
   },
   completeTitle: {
     textDecorationLine: 'line-through',

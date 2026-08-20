@@ -1,15 +1,17 @@
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import ReorderableList, {
   reorderItems,
   type ReorderableListReorderEvent,
 } from 'react-native-reorderable-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BackButton } from '@/components/back-button';
 import { Fab } from '@/components/fab';
 import { ModeMenu } from '@/components/mode-menu';
 import { NoteRow } from '@/components/note-row';
+import { SlidePanel } from '@/components/slide-panel';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { FabSize, MaxContentWidth, Spacing, TabBarHeight } from '@/constants/theme';
@@ -169,19 +171,14 @@ export default function NotesScreen() {
         {list.mode === 'normal' ? <Fab onPress={openNew} /> : null}
       </SafeAreaView>
 
-      <Modal
-        visible={editing !== null}
-        animationType="slide"
-        onRequestClose={() => setEditing(null)}>
+      <SlidePanel visible={editing !== null} onRequestClose={() => setEditing(null)}>
         {/* Kapanınca içerik sökülüyor; böylece her açılışta defaultValue yeniden okunur. */}
         {editing !== null ? (
           <ThemedView style={styles.container}>
             <SafeAreaView style={styles.safeArea}>
               <View style={styles.modalHeader}>
-                <Pressable onPress={() => setEditing(null)} hitSlop={Spacing.two}>
-                  <ThemedText themeColor="textSecondary">İptal</ThemedText>
-                </Pressable>
-                <Pressable onPress={save} hitSlop={Spacing.two}>
+                <BackButton onPress={() => setEditing(null)} />
+                <Pressable onPress={save} hitSlop={Spacing.three}>
                   <ThemedText type="smallBold">Kaydet</ThemedText>
                 </Pressable>
               </View>
@@ -219,7 +216,7 @@ export default function NotesScreen() {
             </SafeAreaView>
           </ThemedView>
         ) : null}
-      </Modal>
+      </SlidePanel>
     </ThemedView>
   );
 }

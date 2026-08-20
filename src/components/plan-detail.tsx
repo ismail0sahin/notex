@@ -1,3 +1,6 @@
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
@@ -8,6 +11,7 @@ import ReorderableList, {
 } from 'react-native-reorderable-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BackButton } from '@/components/back-button';
 import { Fab } from '@/components/fab';
 import { ModeMenu } from '@/components/mode-menu';
 import { TaskRow } from '@/components/task-row';
@@ -23,19 +27,17 @@ import {
   listTasks,
   reorderTasks,
   setTaskDone,
-  updatePlan,
+  setTaskTime,
+  updatePlanTitle,
   updateTask,
+  type PlanKind,
   type Task,
 } from '@/db';
 import { useListMode } from '@/hooks/use-list-mode';
 import { useTheme } from '@/hooks/use-theme';
-import { formatDue, todayYmd, tomorrowYmd } from '@/lib/date';
+import { dateToHm, hmToDate } from '@/lib/date';
 
-const DUE_OPTIONS = [
-  { label: 'Bugün', value: () => todayYmd() },
-  { label: 'Yarın', value: () => tomorrowYmd() },
-  { label: 'Tarihsiz', value: () => null },
-];
+type TimeTarget = { task: Task; field: 'start' | 'end' };
 
 /** Planın içeriği: başlık, tarih ve görev listesi. Değişiklikler anında kaydedilir. */
 export function PlanDetail({ planId, onClose }: { planId: number; onClose: () => void }) {
@@ -43,12 +45,13 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
   const theme = useTheme();
   const list = useListMode();
   const [loaded, setLoaded] = useState(false);
-  const [dueDate, setDueDate] = useState<string | null>(null);
+  const [kind, setKind] = useState<PlanKind>('checklist');
   const [tasks, setTasks] = useState<Task[]>([]);
   // Görev metni normalde düz yazı; dokununca yalnızca o satır düzenlemeye girer.
   // Sürekli açık bir TextInput olsaydı uzun basış Android'in metin seçme
   // menüsüne giderdi; ne çoklu seçim ne sürükleme tetiklenirdi.
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
+  const [timeTarget, setTimeTarget] = useState<TimeTarget | null>(null);
 
   const titleRef = useRef('');
   const newTaskRef = useRef('');
@@ -63,7 +66,7 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
       const plan = await getPlan(db, planId);
       if (plan) {
         titleRef.current = plan.title;
-        setDueDate(plan.due_date);
+        setKind(plan.kind);
       }
       await reloadTasks();
       setLoaded(true);
@@ -73,12 +76,7 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
   const planTitle = () => titleRef.current.trim() || 'Başlıksız plan';
 
   function saveTitle() {
-    updatePlan(db, planId, planTitle(), dueDate);
-  }
-
-  function selectDue(value: string | null) {
-    setDueDate(value);
-    updatePlan(db, planId, planTitle(), value);
+    updatePlanTitle(db, planId, planTitle());
   }
 
   async function addTask() {
@@ -112,8 +110,21 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
     reloadTasks();
   }
 
-  async function removeTask(task: Task) {
-    await deleteTask(db, task.id);
+  /** Saat seçici kapanınca: seçildiyse yaz, "Temizle"ye basıldıysa boşalt. */
+  async function handleTimeChange(event: DateTimePickerEvent, date?: Date) {
+    const target = timeTarget;
+    setTimeTarget(null);
+
+    if (!target) return;
+
+    if (event.type === 'set' && date) {
+      await setTaskTime(db, target.task.id, target.field, dateToHm(date));
+    } else if (event.type === 'neutralButtonPressed') {
+      await setTaskTime(db, target.task.id, target.field, null);
+    } else {
+      return;
+    }
+
     reloadTasks();
   }
 
@@ -167,13 +178,15 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
       <ThemedView style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.header}>
-            <Pressable
-              onPress={list.mode === 'normal' ? onClose : list.reset}
-              hitSlop={Spacing.two}>
-              <ThemedText themeColor="textSecondary">
-                {list.mode === 'normal' ? 'Kapat' : list.selecting ? 'Vazgeç' : 'Bitti'}
-              </ThemedText>
-            </Pressable>
+            {list.mode === 'normal' ? (
+              <BackButton onPress={onClose} />
+            ) : (
+              <Pressable onPress={list.reset} hitSlop={Spacing.three}>
+                <ThemedText themeColor="textSecondary">
+                  {list.selecting ? 'Vazgeç' : 'Bitti'}
+                </ThemedText>
+              </Pressable>
+            )}
 
             <View style={styles.headerRight}>
               <ThemedText type="small" themeColor="textSecondary">
@@ -185,55 +198,39 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
                       ? 'Görev yok'
                       : `${doneCount}/${tasks.length} tamamlandı`}
               </ThemedText>
-              {list.mode === 'normal' && tasks.length > 1 ? (
+              {list.mode === 'normal' && tasks.length > 0 ? (
                 <ModeMenu onReorder={list.startReorder} onSelect={() => list.startSelect()} />
               ) : null}
             </View>
           </View>
 
           {/* Plan başlığı listenin dışında: sürüklenen hücrelerin ölçümüne karışmasın. */}
-          <View style={styles.planHeader}>
-            <TextInput
-              defaultValue={titleRef.current}
-              onChangeText={(text) => {
-                titleRef.current = text;
-              }}
-              onEndEditing={saveTitle}
-              placeholder="Plan adı"
-              placeholderTextColor={theme.textSecondary}
-              style={[styles.titleInput, { color: theme.text }]}
-              multiline
-            />
+          <TextInput
+            defaultValue={titleRef.current}
+            onChangeText={(text) => {
+              titleRef.current = text;
+            }}
+            onEndEditing={saveTitle}
+            placeholder={kind === 'schedule' ? 'Çizelge adı' : 'Plan adı'}
+            placeholderTextColor={theme.textSecondary}
+            style={[styles.titleInput, { color: theme.text }]}
+            multiline
+          />
 
-            <View style={styles.chipRow}>
-              {DUE_OPTIONS.map((option) => {
-                const value = option.value();
-                const selected = value === dueDate;
-
-                return (
-                  <Pressable
-                    key={option.label}
-                    onPress={() => selectDue(value)}
-                    style={[
-                      styles.chip,
-                      {
-                        backgroundColor: selected
-                          ? theme.backgroundSelected
-                          : theme.backgroundElement,
-                      },
-                    ]}>
-                    <ThemedText type={selected ? 'smallBold' : 'small'}>{option.label}</ThemedText>
-                  </Pressable>
-                );
-              })}
-            </View>
-
-            {dueDate && dueDate !== todayYmd() && dueDate !== tomorrowYmd() ? (
-              <ThemedText type="small" themeColor="textSecondary">
-                Seçili tarih: {formatDue(dueDate)}
+          {/* Çizelgede sütunların ne olduğunu söyleyen ince başlık. */}
+          {kind === 'schedule' && tasks.length > 0 ? (
+            <View style={styles.columnHeader}>
+              <ThemedText type="small" themeColor="textSecondary" style={styles.columnName}>
+                Görev
               </ThemedText>
-            ) : null}
-          </View>
+              <ThemedText type="small" themeColor="textSecondary" style={styles.columnTime}>
+                Başlangıç
+              </ThemedText>
+              <ThemedText type="small" themeColor="textSecondary" style={styles.columnTime}>
+                Bitiş
+              </ThemedText>
+            </View>
+          ) : null}
 
           <ReorderableList
             data={tasks}
@@ -245,6 +242,7 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
             renderItem={({ item }) => (
               <TaskRow
                 task={item}
+                kind={kind}
                 mode={list.mode}
                 picked={list.has(item.id)}
                 editing={editingTaskId === item.id}
@@ -253,7 +251,7 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
                 onToggleDone={() => toggleDone(item)}
                 onToggle={() => list.toggle(item.id)}
                 onStartSelect={() => list.startSelect(item.id)}
-                onRemove={() => removeTask(item)}
+                onPickTime={(field) => setTimeTarget({ task: item, field })}
               />
             )}
             ListFooterComponent={
@@ -269,7 +267,7 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
                       onSubmitEditing={addTask}
                       submitBehavior="submit"
                       returnKeyType="done"
-                      placeholder="Görev ekle"
+                      placeholder={kind === 'schedule' ? 'Satır ekle' : 'Görev ekle'}
                       placeholderTextColor={theme.textSecondary}
                       style={[styles.addInput, { color: theme.text }]}
                     />
@@ -289,6 +287,19 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
             <Fab action="delete" onPress={confirmDeleteSelected} bottomInset={0} />
           ) : null}
         </SafeAreaView>
+
+        {timeTarget ? (
+          <DateTimePicker
+            mode="time"
+            is24Hour
+            display="clock"
+            value={hmToDate(
+              timeTarget.field === 'start' ? timeTarget.task.start_time : timeTarget.task.end_time
+            )}
+            neutralButton={{ label: 'Temizle' }}
+            onChange={handleTimeChange}
+          />
+        ) : null}
       </ThemedView>
     </GestureHandlerRootView>
   );
@@ -316,23 +327,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.two,
   },
-  planHeader: {
-    gap: Spacing.two,
-    paddingBottom: Spacing.three,
-  },
   titleInput: {
     fontSize: 24,
     fontWeight: '600',
-    paddingVertical: Spacing.two,
+    paddingTop: Spacing.two,
+    paddingBottom: Spacing.three,
   },
-  chipRow: {
+  columnHeader: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: Spacing.two,
+    // Satırdaki işaretleyici + boşluk kadar içeriden başlıyor ki sütunlar hizalansın.
+    paddingLeft: Spacing.two + 24 + Spacing.two,
+    paddingRight: Spacing.two,
+    paddingBottom: Spacing.one,
   },
-  chip: {
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.four,
+  columnName: {
+    flex: 1,
+  },
+  columnTime: {
+    minWidth: 48,
+    textAlign: 'center',
   },
   list: {
     paddingBottom: FabSize + Spacing.five,

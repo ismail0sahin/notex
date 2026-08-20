@@ -6,12 +6,44 @@ import { Checkbox } from '@/components/checkbox';
 import { DragHandle } from '@/components/drag-handle';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
-import type { Task } from '@/db';
+import type { PlanKind, Task } from '@/db';
 import type { ListMode } from '@/hooks/use-list-mode';
 import { useTheme } from '@/hooks/use-theme';
 
+/** Çizelge satırında saat sütunu. Boşken --:-- görünür ve dokunulunca seçici açar. */
+function TimeCell({
+  value,
+  disabled,
+  onPress,
+  label,
+}: {
+  value: string | null;
+  disabled: boolean;
+  onPress: () => void;
+  label: string;
+}) {
+  const theme = useTheme();
+
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => [
+        styles.timeCell,
+        { backgroundColor: pressed ? theme.backgroundSelected : 'transparent' },
+      ]}>
+      <ThemedText type="small" themeColor={value ? 'text' : 'textSecondary'}>
+        {value ?? '--:--'}
+      </ThemedText>
+    </Pressable>
+  );
+}
+
 export function TaskRow({
   task,
+  kind,
   mode,
   picked,
   editing,
@@ -20,9 +52,10 @@ export function TaskRow({
   onToggleDone,
   onToggle,
   onStartSelect,
-  onRemove,
+  onPickTime,
 }: {
   task: Task;
+  kind: PlanKind;
   mode: ListMode;
   picked: boolean;
   editing: boolean;
@@ -31,7 +64,7 @@ export function TaskRow({
   onToggleDone: () => void;
   onToggle: () => void;
   onStartSelect: () => void;
-  onRemove: () => void;
+  onPickTime: (field: 'start' | 'end') => void;
 }) {
   const theme = useTheme();
   const drag = useReorderableDrag();
@@ -39,15 +72,17 @@ export function TaskRow({
   const draftRef = useRef(task.title);
 
   const done = task.done === 1;
+  const normal = mode === 'normal';
+  const schedule = kind === 'schedule';
 
   const handlePress = () => {
     if (mode === 'select') onToggle();
-    else if (mode === 'normal') onStartEdit();
+    else if (normal) onStartEdit();
   };
 
   const handleLongPress = () => {
     if (mode === 'reorder') drag();
-    else if (mode === 'normal') onStartSelect();
+    else if (normal) onStartSelect();
     else onToggle();
   };
 
@@ -57,6 +92,7 @@ export function TaskRow({
       onLongPress={handleLongPress}
       style={({ pressed }) => [
         styles.row,
+        schedule && styles.scheduleRow,
         {
           backgroundColor: picked || pressed ? theme.backgroundSelected : theme.backgroundElement,
           borderColor: picked ? theme.accent : 'transparent',
@@ -64,7 +100,7 @@ export function TaskRow({
       ]}>
       {/* Normal mod dışında işaretleyici devre dışı: dokunuş satıra gitsin,
           yoksa aynı hareket hem seçer hem görevi tamamlar. */}
-      <View pointerEvents={mode === 'normal' ? 'auto' : 'none'}>
+      <View pointerEvents={normal ? 'auto' : 'none'}>
         <Checkbox checked={done} onPress={onToggleDone} />
       </View>
 
@@ -84,23 +120,31 @@ export function TaskRow({
         />
       ) : (
         <ThemedText
+          numberOfLines={2}
           themeColor={done ? 'textSecondary' : 'text'}
           style={[styles.text, done && styles.doneText]}>
           {task.title}
         </ThemedText>
       )}
 
-      {mode === 'reorder' ? <DragHandle /> : null}
-
-      {mode === 'normal' ? (
-        <Pressable
-          onPress={onRemove}
-          hitSlop={Spacing.two}
-          accessibilityRole="button"
-          accessibilityLabel="Görevi sil">
-          <ThemedText themeColor="textSecondary">✕</ThemedText>
-        </Pressable>
+      {schedule ? (
+        <>
+          <TimeCell
+            value={task.start_time}
+            disabled={!normal}
+            onPress={() => onPickTime('start')}
+            label="Başlangıç saati"
+          />
+          <TimeCell
+            value={task.end_time}
+            disabled={!normal}
+            onPress={() => onPickTime('end')}
+            label="Bitiş saati"
+          />
+        </>
       ) : null}
+
+      {mode === 'reorder' ? <DragHandle /> : null}
     </Pressable>
   );
 }
@@ -117,6 +161,11 @@ const styles = StyleSheet.create({
     // Satır aralığı burada: sürüklenen hücrenin yüksekliğine dahil olması gerekiyor.
     marginBottom: Spacing.two,
   },
+  // Çizelgede dört sütun var; boşluklar daralmasa isim sütununa yer kalmıyor.
+  scheduleRow: {
+    gap: Spacing.two,
+    paddingHorizontal: Spacing.two,
+  },
   text: {
     flex: 1,
     fontSize: 16,
@@ -125,5 +174,12 @@ const styles = StyleSheet.create({
   },
   doneText: {
     textDecorationLine: 'line-through',
+  },
+  timeCell: {
+    minWidth: 48,
+    alignItems: 'center',
+    paddingVertical: Spacing.one,
+    paddingHorizontal: Spacing.one,
+    borderRadius: Spacing.two,
   },
 });

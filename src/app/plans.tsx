@@ -1,6 +1,6 @@
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import ReorderableList, {
   reorderItems,
   type ReorderableListReorderEvent,
@@ -11,6 +11,8 @@ import { Fab } from '@/components/fab';
 import { ModeMenu } from '@/components/mode-menu';
 import { PlanDetail } from '@/components/plan-detail';
 import { PlanRow } from '@/components/plan-row';
+import { PlanTypeSheet } from '@/components/plan-type-sheet';
+import { SlidePanel } from '@/components/slide-panel';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { FabSize, MaxContentWidth, Spacing, TabBarHeight } from '@/constants/theme';
@@ -22,10 +24,10 @@ import {
   listPlans,
   listTasks,
   reorderPlans,
+  type PlanKind,
   type PlanWithProgress,
 } from '@/db';
 import { useListMode } from '@/hooks/use-list-mode';
-import { todayYmd } from '@/lib/date';
 
 /** + ile açılan plan bu adla oluşur; kullanıcı dokunmadan çıkarsa geri alınır. */
 const NEW_PLAN_TITLE = 'Yeni plan';
@@ -35,6 +37,7 @@ export default function PlansScreen() {
   const list = useListMode();
   const [plans, setPlans] = useState<PlanWithProgress[]>([]);
   const [openPlanId, setOpenPlanId] = useState<number | null>(null);
+  const [askingKind, setAskingKind] = useState(false);
 
   const reload = useCallback(async () => {
     setPlans(await listPlans(db));
@@ -44,8 +47,9 @@ export default function PlansScreen() {
     reload();
   }, [reload]);
 
-  async function addPlan() {
-    const id = await createPlan(db, NEW_PLAN_TITLE, todayYmd());
+  async function addPlan(kind: PlanKind) {
+    setAskingKind(false);
+    const id = await createPlan(db, NEW_PLAN_TITLE, null, kind);
     await reload();
     setOpenPlanId(Number(id));
   }
@@ -146,17 +150,22 @@ export default function PlansScreen() {
         />
 
         {list.selecting ? <Fab action="delete" onPress={confirmDeleteSelected} /> : null}
-        {list.mode === 'normal' ? <Fab onPress={addPlan} /> : null}
+        {list.mode === 'normal' ? <Fab onPress={() => setAskingKind(true)} /> : null}
       </SafeAreaView>
 
-      <Modal
+      <PlanTypeSheet
+        visible={askingKind}
+        onCancel={() => setAskingKind(false)}
+        onPick={addPlan}
+      />
+
+      <SlidePanel
         visible={openPlanId !== null}
-        animationType="slide"
         onRequestClose={() => openPlanId !== null && closeDetail(openPlanId)}>
         {openPlanId !== null ? (
           <PlanDetail planId={openPlanId} onClose={() => closeDetail(openPlanId)} />
         ) : null}
-      </Modal>
+      </SlidePanel>
     </ThemedView>
   );
 }

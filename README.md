@@ -9,14 +9,23 @@ oturum açma ve senkronizasyon yok; uygulama internet bağlantısı olmadan çal
 
 **Notlar** — başlık ve içerik. Son düzenlenen en üstte. Satıra dokunup düzenle.
 
-**Planlar** — bir plan tek bir görev değil, görev listesidir. Plana girip alt alta
-görev eklersin, işaretleyerek tamamlarsın. Görev metnine dokunmak o satırı
-düzenlemeye açar; boşaltıp çıkarsan görev silinir. Planın tamamlanma oranı görevlerinden
+**Planlar** — bir plan tek bir görev değil, görev listesidir. `+` basınca hangi
+türde olacağını sorar:
+
+- **Görev listesi** — alt alta görevler, tik atarak tamamla.
+- **Çizelge** — her satırda tik, görev adı, başlangıç ve bitiş saati. Saate
+  dokunmak Android'in saat seçicisini açar; "Temizle" ile saati boşaltabilirsin.
+
+Not ve plan sayfaları sağdan kayarak açılır, sol üstteki `←` ile kapanır.
+
+Plana girip alt alta satır eklersin. Görev metnine dokunmak o satırı düzenlemeye
+açar; boşaltıp çıkarsan satır silinir. Satırları silmek ve sıralamak için plan
+içindeki `⋮` menüsü kullanılır — listelerdeki mantığın aynısı. Çizelgelerde liste satırında günün
+kapsamı da görünür (`09:00 – 17:30`). Planın tamamlanma oranı görevlerinden
 hesaplanır; listede `3/5 görev tamam` ve ince bir ilerleme çubuğu görünür. Tümü
 biten planlar üstü çizili olarak listenin altına iner, tarihi geçmişler kırmızı
 etiketlenir.
 
-Her planın tarihi olabilir: Bugün, Yarın ya da tarihsiz.
 
 **Modlar** — her listenin sağ üstünde bir `⋮` düğmesi var: "Sırala" ve "Seç".
 
