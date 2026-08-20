@@ -7,16 +7,23 @@ oturum açma ve senkronizasyon yok; uygulama internet bağlantısı olmadan çal
 
 ## Ne yapar
 
-**Notlar** — başlık ve içerik. Son düzenlenen en üstte. Satıra dokunup düzenle,
-uzun basıp sil.
+**Notlar** — başlık ve içerik. Son düzenlenen en üstte. Satıra dokunup düzenle.
 
 **Planlar** — bir plan tek bir görev değil, görev listesidir. Plana girip alt alta
-görev eklersin, işaretleyerek tamamlarsın. Planın tamamlanma oranı görevlerinden
+görev eklersin, işaretleyerek tamamlarsın. Görev metnine dokunmak o satırı
+düzenlemeye açar; boşaltıp çıkarsan görev silinir. Planın tamamlanma oranı görevlerinden
 hesaplanır; listede `3/5 görev tamam` ve ince bir ilerleme çubuğu görünür. Tümü
 biten planlar üstü çizili olarak listenin altına iner, tarihi geçmişler kırmızı
 etiketlenir.
 
 Her planın tarihi olabilir: Bugün, Yarın ya da tarihsiz.
+
+**Çoklu seçim** — notlarda, planlarda ve plan içindeki görevlerde bir satıra
+uzun basmak seçim modunu açar.
+Sonrasında dokunmak satırı açmaz, seçime ekler ya da çıkarır; seçili satırlar
+aksan renkli çerçeveyle işaretlenir. Köşedeki `+` düğmesi kırmızı bir çöp
+kutusuna dönüşür ve seçilenleri tek seferde siler. Son seçim kalkınca ya da
+"Vazgeç"e basınca mod kapanır.
 
 ## Kurulum
 

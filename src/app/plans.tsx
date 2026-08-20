@@ -11,11 +11,13 @@ import { FabSize, MaxContentWidth, Spacing, TabBarHeight } from '@/constants/the
 import {
   createPlan,
   deletePlan,
+  deletePlans,
   getPlan,
   listPlans,
   listTasks,
   type PlanWithProgress,
 } from '@/db';
+import { useSelection } from '@/hooks/use-selection';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDue, isOverdue, todayYmd } from '@/lib/date';
 
@@ -25,6 +27,7 @@ const NEW_PLAN_TITLE = 'Yeni plan';
 export default function PlansScreen() {
   const db = useSQLiteContext();
   const theme = useTheme();
+  const selection = useSelection();
   const [plans, setPlans] = useState<PlanWithProgress[]>([]);
   const [openPlanId, setOpenPlanId] = useState<number | null>(null);
 
@@ -55,18 +58,25 @@ export default function PlansScreen() {
     reload();
   }
 
-  function confirmDelete(plan: PlanWithProgress) {
-    Alert.alert('Planı sil', `"${plan.title}" ve içindeki görevler silinecek.`, [
-      { text: 'Vazgeç', style: 'cancel' },
-      {
-        text: 'Sil',
-        style: 'destructive',
-        onPress: async () => {
-          await deletePlan(db, plan.id);
-          reload();
+  function confirmDeleteSelected() {
+    const count = selection.count;
+
+    Alert.alert(
+      'Seçilenleri sil',
+      `${count} plan ve içindeki bütün görevler kalıcı olarak silinecek.`,
+      [
+        { text: 'Vazgeç', style: 'cancel' },
+        {
+          text: 'Sil',
+          style: 'destructive',
+          onPress: async () => {
+            await deletePlans(db, selection.ids);
+            selection.clear();
+            reload();
+          },
         },
-      },
-    ]);
+      ]
+    );
   }
 
   const activeCount = plans.filter(
@@ -76,9 +86,21 @@ export default function PlansScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="subtitle">Planlar</ThemedText>
+        <View style={styles.header}>
+          <ThemedText type="subtitle">Planlar</ThemedText>
+          {selection.active ? (
+            <Pressable onPress={selection.clear} hitSlop={Spacing.two}>
+              <ThemedText themeColor="textSecondary">Vazgeç</ThemedText>
+            </Pressable>
+          ) : null}
+        </View>
+
         <ThemedText type="small" themeColor="textSecondary">
-          {plans.length === 0 ? 'Plan yok' : `${activeCount} plan sürüyor`}
+          {selection.active
+            ? `${selection.count} plan seçili`
+            : plans.length === 0
+              ? 'Plan yok'
+              : `${activeCount} plan sürüyor`}
         </ThemedText>
 
         <FlatList
@@ -95,14 +117,22 @@ export default function PlansScreen() {
             const dueLabel = formatDue(item.due_date);
             const overdue = !complete && isOverdue(item.due_date);
             const progress = item.task_count === 0 ? 0 : item.done_count / item.task_count;
+            const picked = selection.has(item.id);
 
             return (
               <Pressable
-                onPress={() => setOpenPlanId(item.id)}
-                onLongPress={() => confirmDelete(item)}
+                // Seçim açıkken dokunmak planı açmaz, seçimi değiştirir.
+                onPress={() =>
+                  selection.active ? selection.toggle(item.id) : setOpenPlanId(item.id)
+                }
+                onLongPress={() => selection.toggle(item.id)}
                 style={({ pressed }) => [
                   styles.row,
-                  { backgroundColor: pressed ? theme.backgroundSelected : theme.backgroundElement },
+                  {
+                    backgroundColor:
+                      picked || pressed ? theme.backgroundSelected : theme.backgroundElement,
+                    borderColor: picked ? theme.accent : 'transparent',
+                  },
                 ]}>
                 <View style={styles.rowTop}>
                   <ThemedText
@@ -142,7 +172,11 @@ export default function PlansScreen() {
           }}
         />
 
-        <Fab onPress={addPlan} />
+        {selection.active ? (
+          <Fab action="delete" onPress={confirmDeleteSelected} />
+        ) : (
+          <Fab onPress={addPlan} />
+        )}
       </SafeAreaView>
 
       <Modal
@@ -169,6 +203,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     gap: Spacing.two,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.three,
+  },
   list: {
     gap: Spacing.two,
     paddingTop: Spacing.two,
@@ -181,6 +221,9 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     padding: Spacing.three,
     borderRadius: Spacing.three,
+    // Seçili satırın çerçevesi burada açılır; her satırda durduğu için
+    // seçim sırasında yüksekliklerin oynamasını engelliyor.
+    borderWidth: 2,
   },
   rowTop: {
     flexDirection: 'row',

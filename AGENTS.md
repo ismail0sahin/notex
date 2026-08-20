@@ -17,11 +17,17 @@ Arayüz metinleri Türkçe.
 - `src/app/_layout.tsx` — `SQLiteProvider` burada; ekranlar `useSQLiteContext()` kullanır.
 - `src/app/index.tsx` — Notlar sekmesi. `src/app/plans.tsx` — Planlar sekmesi (plan listesi).
 - `src/components/plan-detail.tsx` — bir planın içi: başlık, tarih, görev checklist'i.
+  Görev metni normalde düz yazıdır, dokununca yalnızca o satır `TextInput`'e döner.
+  Bu bilinçli: sürekli açık bir `TextInput` olsaydı uzun basış Android'in metin
+  seçme menüsüne gider, çoklu seçim hiç tetiklenmezdi. Geri çevirmeyin.
   Plan bir kapsayıcıdır; tamamlanma durumu `tasks` satırlarından hesaplanır, `plans`
   tablosunda tutulmaz. Detay ekranındaki değişiklikler anında kaydedilir, Kaydet düğmesi yok.
 - Ekran geçişleri `Modal` ile yapılıyor, ayrı route açılmıyor — `NativeTabs` altında
   sekme olmayan route'lar sorun çıkarıyor.
 - `src/components/app-tabs.tsx` — sekmeler (`NativeTabs`). Sekme adı dosya adıyla eşleşmeli.
+- `src/hooks/use-selection.ts` — çoklu seçim. Ayrı bir "mod" bayrağı yok: seçim
+  boş değilse mod açıktır, son öğe kalkınca kendiliğinden kapanır. Yeni bir listeye
+  çoklu seçim eklenecekse bu hook kullanılır, ikinci bir durum değişkeni açılmaz.
 - `src/lib/date.ts` — `YYYY-MM-DD` yerel tarih yardımcıları. `toISOString()` UTC'ye
   kaydırdığı için tarih üretmede kullanılmaz.
 - Stil: `ThemedText` / `ThemedView` + `Colors`/`Spacing` (`src/constants/theme.ts`).

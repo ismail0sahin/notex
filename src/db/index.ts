@@ -125,6 +125,14 @@ export function deleteNote(db: SQLiteDatabase, id: number) {
   return db.runAsync('DELETE FROM notes WHERE id = ?', id);
 }
 
+/** Çoklu seçimle silme. Tek sorgu, tek geçiş. */
+export function deleteNotes(db: SQLiteDatabase, ids: readonly number[]) {
+  if (ids.length === 0) return Promise.resolve(null);
+
+  const placeholders = ids.map(() => '?').join(', ');
+  return db.runAsync(`DELETE FROM notes WHERE id IN (${placeholders})`, ...ids);
+}
+
 // --- Planlar ---
 
 /** Tamamlananlar en sona, sonra tarihe göre; tarihsizler tarihlilerin ardından. */
@@ -171,6 +179,14 @@ export function deletePlan(db: SQLiteDatabase, id: number) {
   return db.runAsync('DELETE FROM plans WHERE id = ?', id);
 }
 
+/** Çoklu seçimle silme; görevler cascade ile gider. */
+export function deletePlans(db: SQLiteDatabase, ids: readonly number[]) {
+  if (ids.length === 0) return Promise.resolve(null);
+
+  const placeholders = ids.map(() => '?').join(', ');
+  return db.runAsync(`DELETE FROM plans WHERE id IN (${placeholders})`, ...ids);
+}
+
 // --- Görevler ---
 
 /** Bitmeyenler önce, her grup içinde eklenme sırasına göre. */
@@ -200,4 +216,12 @@ export function setTaskDone(db: SQLiteDatabase, id: number, done: boolean) {
 
 export function deleteTask(db: SQLiteDatabase, id: number) {
   return db.runAsync('DELETE FROM tasks WHERE id = ?', id);
+}
+
+/** Çoklu seçimle silme. */
+export function deleteTasks(db: SQLiteDatabase, ids: readonly number[]) {
+  if (ids.length === 0) return Promise.resolve(null);
+
+  const placeholders = ids.map(() => '?').join(', ');
+  return db.runAsync(`DELETE FROM tasks WHERE id IN (${placeholders})`, ...ids);
 }

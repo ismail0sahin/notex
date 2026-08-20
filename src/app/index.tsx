@@ -7,7 +7,8 @@ import { Fab } from '@/components/fab';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { FabSize, MaxContentWidth, Spacing, TabBarHeight } from '@/constants/theme';
-import { createNote, deleteNote, listNotes, updateNote, type Note } from '@/db';
+import { createNote, deleteNote, deleteNotes, listNotes, updateNote, type Note } from '@/db';
+import { useSelection } from '@/hooks/use-selection';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDue } from '@/lib/date';
 
@@ -16,6 +17,7 @@ type Editing = Note | 'new' | null;
 export default function NotesScreen() {
   const db = useSQLiteContext();
   const theme = useTheme();
+  const selection = useSelection();
   const [notes, setNotes] = useState<Note[]>([]);
   const [editing, setEditing] = useState<Editing>(null);
 
@@ -78,10 +80,40 @@ export default function NotesScreen() {
     ]);
   }
 
+  function confirmDeleteSelected() {
+    const count = selection.count;
+
+    Alert.alert('Seçilenleri sil', `${count} not kalıcı olarak silinecek.`, [
+      { text: 'Vazgeç', style: 'cancel' },
+      {
+        text: 'Sil',
+        style: 'destructive',
+        onPress: async () => {
+          await deleteNotes(db, selection.ids);
+          selection.clear();
+          reload();
+        },
+      },
+    ]);
+  }
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="subtitle">Notlar</ThemedText>
+        <View style={styles.header}>
+          <ThemedText type="subtitle">Notlar</ThemedText>
+          {selection.active ? (
+            <Pressable onPress={selection.clear} hitSlop={Spacing.two}>
+              <ThemedText themeColor="textSecondary">Vazgeç</ThemedText>
+            </Pressable>
+          ) : null}
+        </View>
+
+        {selection.active ? (
+          <ThemedText type="small" themeColor="textSecondary">
+            {selection.count} not seçili
+          </ThemedText>
+        ) : null}
 
         <FlatList
           data={notes}
@@ -92,28 +124,41 @@ export default function NotesScreen() {
               Henüz not yok. Sağ alttaki + ile ilk notunu ekle.
             </ThemedText>
           }
-          renderItem={({ item }) => (
-            <Pressable
-              onPress={() => openEdit(item)}
-              onLongPress={() => confirmDelete(item)}
-              style={({ pressed }) => [
-                styles.row,
-                { backgroundColor: pressed ? theme.backgroundSelected : theme.backgroundElement },
-              ]}>
-              <ThemedText numberOfLines={1}>{item.title}</ThemedText>
-              {item.body ? (
-                <ThemedText type="small" themeColor="textSecondary" numberOfLines={2}>
-                  {item.body}
+          renderItem={({ item }) => {
+            const picked = selection.has(item.id);
+
+            return (
+              <Pressable
+                // Seçim açıkken dokunmak notu açmaz, seçimi değiştirir.
+                onPress={() => (selection.active ? selection.toggle(item.id) : openEdit(item))}
+                onLongPress={() => selection.toggle(item.id)}
+                style={({ pressed }) => [
+                  styles.row,
+                  {
+                    backgroundColor:
+                      picked || pressed ? theme.backgroundSelected : theme.backgroundElement,
+                    borderColor: picked ? theme.accent : 'transparent',
+                  },
+                ]}>
+                <ThemedText numberOfLines={1}>{item.title}</ThemedText>
+                {item.body ? (
+                  <ThemedText type="small" themeColor="textSecondary" numberOfLines={2}>
+                    {item.body}
+                  </ThemedText>
+                ) : null}
+                <ThemedText type="small" themeColor="textSecondary">
+                  {formatDue(item.updated_at.slice(0, 10)) ?? ''}
                 </ThemedText>
-              ) : null}
-              <ThemedText type="small" themeColor="textSecondary">
-                {formatDue(item.updated_at.slice(0, 10)) ?? ''}
-              </ThemedText>
-            </Pressable>
-          )}
+              </Pressable>
+            );
+          }}
         />
 
-        <Fab onPress={openNew} />
+        {selection.active ? (
+          <Fab action="delete" onPress={confirmDeleteSelected} />
+        ) : (
+          <Fab onPress={openNew} />
+        )}
       </SafeAreaView>
 
       <Modal
@@ -181,10 +226,17 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
     paddingHorizontal: Spacing.four,
+    gap: Spacing.two,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: Spacing.three,
   },
   list: {
     gap: Spacing.two,
+    paddingTop: Spacing.two,
     paddingBottom: TabBarHeight + FabSize + Spacing.four,
   },
   empty: {
@@ -194,6 +246,9 @@ const styles = StyleSheet.create({
     gap: Spacing.half,
     padding: Spacing.three,
     borderRadius: Spacing.three,
+    // Seçili satırın çerçevesi burada açılır; her satırda durduğu için
+    // seçim sırasında yüksekliklerin oynamasını engelliyor.
+    borderWidth: 2,
   },
   modalHeader: {
     flexDirection: 'row',
