@@ -1,23 +1,36 @@
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, FlatList, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import ReorderableList, {
+  reorderItems,
+  type ReorderableListReorderEvent,
+} from 'react-native-reorderable-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Fab } from '@/components/fab';
+import { ModeMenu } from '@/components/mode-menu';
+import { NoteRow } from '@/components/note-row';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { FabSize, MaxContentWidth, Spacing, TabBarHeight } from '@/constants/theme';
-import { createNote, deleteNote, deleteNotes, listNotes, updateNote, type Note } from '@/db';
-import { useSelection } from '@/hooks/use-selection';
+import {
+  createNote,
+  deleteNote,
+  deleteNotes,
+  listNotes,
+  reorderNotes,
+  updateNote,
+  type Note,
+} from '@/db';
+import { useListMode } from '@/hooks/use-list-mode';
 import { useTheme } from '@/hooks/use-theme';
-import { formatDue } from '@/lib/date';
 
 type Editing = Note | 'new' | null;
 
 export default function NotesScreen() {
   const db = useSQLiteContext();
   const theme = useTheme();
-  const selection = useSelection();
+  const list = useListMode();
   const [notes, setNotes] = useState<Note[]>([]);
   const [editing, setEditing] = useState<Editing>(null);
 
@@ -65,6 +78,16 @@ export default function NotesScreen() {
     reload();
   }
 
+  /** Ekranda hemen uygula, sonra sırayı veritabanına yaz. */
+  async function handleReorder({ from, to }: ReorderableListReorderEvent) {
+    const next = reorderItems(notes, from, to);
+    setNotes(next);
+    await reorderNotes(
+      db,
+      next.map((note) => note.id)
+    );
+  }
+
   function confirmDelete(note: Note) {
     Alert.alert('Notu sil', `"${note.title}" kalıcı olarak silinecek.`, [
       { text: 'Vazgeç', style: 'cancel' },
@@ -81,16 +104,14 @@ export default function NotesScreen() {
   }
 
   function confirmDeleteSelected() {
-    const count = selection.count;
-
-    Alert.alert('Seçilenleri sil', `${count} not kalıcı olarak silinecek.`, [
+    Alert.alert('Seçilenleri sil', `${list.count} not kalıcı olarak silinecek.`, [
       { text: 'Vazgeç', style: 'cancel' },
       {
         text: 'Sil',
         style: 'destructive',
         onPress: async () => {
-          await deleteNotes(db, selection.ids);
-          selection.clear();
+          await deleteNotes(db, list.ids);
+          list.reset();
           reload();
         },
       },
@@ -102,63 +123,50 @@ export default function NotesScreen() {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
           <ThemedText type="subtitle">Notlar</ThemedText>
-          {selection.active ? (
-            <Pressable onPress={selection.clear} hitSlop={Spacing.two}>
-              <ThemedText themeColor="textSecondary">Vazgeç</ThemedText>
+          {list.mode === 'normal' ? (
+            <ModeMenu onReorder={list.startReorder} onSelect={() => list.startSelect()} />
+          ) : (
+            <Pressable onPress={list.reset} hitSlop={Spacing.two}>
+              <ThemedText themeColor="textSecondary">
+                {list.selecting ? 'Vazgeç' : 'Bitti'}
+              </ThemedText>
             </Pressable>
-          ) : null}
+          )}
         </View>
 
-        {selection.active ? (
+        {list.mode === 'normal' ? null : (
           <ThemedText type="small" themeColor="textSecondary">
-            {selection.count} not seçili
+            {list.selecting
+              ? `${list.count} not seçili`
+              : 'Taşımak için satırı basılı tutup sürükle'}
           </ThemedText>
-        ) : null}
+        )}
 
-        <FlatList
+        <ReorderableList
           data={notes}
           keyExtractor={(item) => String(item.id)}
+          onReorder={handleReorder}
+          dragEnabled={list.reordering}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
             <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
               Henüz not yok. Sağ alttaki + ile ilk notunu ekle.
             </ThemedText>
           }
-          renderItem={({ item }) => {
-            const picked = selection.has(item.id);
-
-            return (
-              <Pressable
-                // Seçim açıkken dokunmak notu açmaz, seçimi değiştirir.
-                onPress={() => (selection.active ? selection.toggle(item.id) : openEdit(item))}
-                onLongPress={() => selection.toggle(item.id)}
-                style={({ pressed }) => [
-                  styles.row,
-                  {
-                    backgroundColor:
-                      picked || pressed ? theme.backgroundSelected : theme.backgroundElement,
-                    borderColor: picked ? theme.accent : 'transparent',
-                  },
-                ]}>
-                <ThemedText numberOfLines={1}>{item.title}</ThemedText>
-                {item.body ? (
-                  <ThemedText type="small" themeColor="textSecondary" numberOfLines={2}>
-                    {item.body}
-                  </ThemedText>
-                ) : null}
-                <ThemedText type="small" themeColor="textSecondary">
-                  {formatDue(item.updated_at.slice(0, 10)) ?? ''}
-                </ThemedText>
-              </Pressable>
-            );
-          }}
+          renderItem={({ item }) => (
+            <NoteRow
+              note={item}
+              mode={list.mode}
+              picked={list.has(item.id)}
+              onOpen={() => openEdit(item)}
+              onToggle={() => list.toggle(item.id)}
+              onStartSelect={() => list.startSelect(item.id)}
+            />
+          )}
         />
 
-        {selection.active ? (
-          <Fab action="delete" onPress={confirmDeleteSelected} />
-        ) : (
-          <Fab onPress={openNew} />
-        )}
+        {list.selecting ? <Fab action="delete" onPress={confirmDeleteSelected} /> : null}
+        {list.mode === 'normal' ? <Fab onPress={openNew} /> : null}
       </SafeAreaView>
 
       <Modal
@@ -235,20 +243,11 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   list: {
-    gap: Spacing.two,
     paddingTop: Spacing.two,
     paddingBottom: TabBarHeight + FabSize + Spacing.four,
   },
   empty: {
     paddingVertical: Spacing.four,
-  },
-  row: {
-    gap: Spacing.half,
-    padding: Spacing.three,
-    borderRadius: Spacing.three,
-    // Seçili satırın çerçevesi burada açılır; her satırda durduğu için
-    // seçim sırasında yüksekliklerin oynamasını engelliyor.
-    borderWidth: 2,
   },
   modalHeader: {
     flexDirection: 'row',

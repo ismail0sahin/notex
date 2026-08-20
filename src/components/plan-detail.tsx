@@ -1,10 +1,16 @@
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import ReorderableList, {
+  reorderItems,
+  type ReorderableListReorderEvent,
+} from 'react-native-reorderable-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Checkbox } from '@/components/checkbox';
 import { Fab } from '@/components/fab';
+import { ModeMenu } from '@/components/mode-menu';
+import { TaskRow } from '@/components/task-row';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { FabSize, MaxContentWidth, Spacing } from '@/constants/theme';
@@ -15,12 +21,13 @@ import {
   deleteTasks,
   getPlan,
   listTasks,
+  reorderTasks,
   setTaskDone,
   updatePlan,
   updateTask,
   type Task,
 } from '@/db';
-import { useSelection } from '@/hooks/use-selection';
+import { useListMode } from '@/hooks/use-list-mode';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDue, todayYmd, tomorrowYmd } from '@/lib/date';
 
@@ -34,19 +41,16 @@ const DUE_OPTIONS = [
 export function PlanDetail({ planId, onClose }: { planId: number; onClose: () => void }) {
   const db = useSQLiteContext();
   const theme = useTheme();
-  const selection = useSelection();
+  const list = useListMode();
   const [loaded, setLoaded] = useState(false);
   const [dueDate, setDueDate] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   // Görev metni normalde düz yazı; dokununca yalnızca o satır düzenlemeye girer.
   // Sürekli açık bir TextInput olsaydı uzun basış Android'in metin seçme
-  // menüsüne giderdi ve çoklu seçim hiç tetiklenmezdi.
+  // menüsüne giderdi; ne çoklu seçim ne sürükleme tetiklenirdi.
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
 
-  // Metin alanları kontrolsüz: yazılan metin state'e uğramadan ref'te birikiyor.
-  // Her tuşta value'yu geri yazmak Android klavyesinde ü/ğ/ş gibi harfleri düşürüyor.
   const titleRef = useRef('');
-  const draftRef = useRef('');
   const newTaskRef = useRef('');
   const newTaskInput = useRef<TextInput>(null);
 
@@ -87,19 +91,14 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
     reloadTasks();
   }
 
-  async function toggleTask(task: Task) {
+  async function toggleDone(task: Task) {
     await setTaskDone(db, task.id, task.done === 0);
     reloadTasks();
   }
 
-  function startEdit(task: Task) {
-    draftRef.current = task.title;
-    setEditingTaskId(task.id);
-  }
-
   /** Boşaltılan görev silinir — checklist'te boş satır bırakmanın anlamı yok. */
-  async function finishEdit(task: Task) {
-    const next = draftRef.current.trim();
+  async function saveTask(task: Task, value: string) {
+    const next = value.trim();
     setEditingTaskId(null);
 
     if (!next) {
@@ -118,15 +117,25 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
     reloadTasks();
   }
 
+  /** Ekranda hemen uygula, sonra sırayı veritabanına yaz. */
+  async function handleReorder({ from, to }: ReorderableListReorderEvent) {
+    const next = reorderItems(tasks, from, to);
+    setTasks(next);
+    await reorderTasks(
+      db,
+      next.map((task) => task.id)
+    );
+  }
+
   function confirmDeleteSelected() {
-    Alert.alert('Seçilenleri sil', `${selection.count} görev kalıcı olarak silinecek.`, [
+    Alert.alert('Seçilenleri sil', `${list.count} görev kalıcı olarak silinecek.`, [
       { text: 'Vazgeç', style: 'cancel' },
       {
         text: 'Sil',
         style: 'destructive',
         onPress: async () => {
-          await deleteTasks(db, selection.ids);
-          selection.clear();
+          await deleteTasks(db, list.ids);
+          list.reset();
           reloadTasks();
         },
       },
@@ -153,167 +162,135 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
   if (!loaded) return <ThemedView style={styles.container} />;
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.header}>
-          <Pressable
-            onPress={selection.active ? selection.clear : onClose}
-            hitSlop={Spacing.two}>
-            <ThemedText themeColor="textSecondary">
-              {selection.active ? 'Vazgeç' : 'Kapat'}
-            </ThemedText>
-          </Pressable>
-          <ThemedText type="small" themeColor="textSecondary">
-            {selection.active
-              ? `${selection.count} görev seçili`
-              : tasks.length === 0
-                ? 'Görev yok'
-                : `${doneCount}/${tasks.length} tamamlandı`}
-          </ThemedText>
-        </View>
+    // Modal içindeki hareketler kendi kökünü ister; bu olmadan sürükleme çalışmaz.
+    <GestureHandlerRootView style={styles.container}>
+      <ThemedView style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.header}>
+            <Pressable
+              onPress={list.mode === 'normal' ? onClose : list.reset}
+              hitSlop={Spacing.two}>
+              <ThemedText themeColor="textSecondary">
+                {list.mode === 'normal' ? 'Kapat' : list.selecting ? 'Vazgeç' : 'Bitti'}
+              </ThemedText>
+            </Pressable>
 
-        <FlatList
-          data={tasks}
-          keyExtractor={(item) => String(item.id)}
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={styles.list}
-          ListHeaderComponent={
-            <View style={styles.planHeader}>
-              <TextInput
-                defaultValue={titleRef.current}
-                onChangeText={(text) => {
-                  titleRef.current = text;
-                }}
-                onEndEditing={saveTitle}
-                placeholder="Plan adı"
-                placeholderTextColor={theme.textSecondary}
-                style={[styles.titleInput, { color: theme.text }]}
-                multiline
-              />
-
-              <View style={styles.chipRow}>
-                {DUE_OPTIONS.map((option) => {
-                  const value = option.value();
-                  const selected = value === dueDate;
-
-                  return (
-                    <Pressable
-                      key={option.label}
-                      onPress={() => selectDue(value)}
-                      style={[
-                        styles.chip,
-                        {
-                          backgroundColor: selected
-                            ? theme.backgroundSelected
-                            : theme.backgroundElement,
-                        },
-                      ]}>
-                      <ThemedText type={selected ? 'smallBold' : 'small'}>
-                        {option.label}
-                      </ThemedText>
-                    </Pressable>
-                  );
-                })}
-              </View>
-
-              {dueDate && dueDate !== todayYmd() && dueDate !== tomorrowYmd() ? (
-                <ThemedText type="small" themeColor="textSecondary">
-                  Seçili tarih: {formatDue(dueDate)}
-                </ThemedText>
+            <View style={styles.headerRight}>
+              <ThemedText type="small" themeColor="textSecondary">
+                {list.selecting
+                  ? `${list.count} görev seçili`
+                  : list.reordering
+                    ? 'Basılı tutup sürükle'
+                    : tasks.length === 0
+                      ? 'Görev yok'
+                      : `${doneCount}/${tasks.length} tamamlandı`}
+              </ThemedText>
+              {list.mode === 'normal' && tasks.length > 1 ? (
+                <ModeMenu onReorder={list.startReorder} onSelect={() => list.startSelect()} />
               ) : null}
             </View>
-          }
-          renderItem={({ item }) => {
-            const done = item.done === 1;
-            const picked = selection.has(item.id);
+          </View>
 
-            return (
-              <Pressable
-                // Seçim açıkken dokunmak düzenlemeye girmez, seçimi değiştirir.
-                onPress={() => (selection.active ? selection.toggle(item.id) : startEdit(item))}
-                onLongPress={() => selection.toggle(item.id)}
-                style={({ pressed }) => [
-                  styles.taskRow,
-                  {
-                    backgroundColor:
-                      picked || pressed ? theme.backgroundSelected : theme.backgroundElement,
-                    borderColor: picked ? theme.accent : 'transparent',
-                  },
-                ]}>
-                {/* Seçim sırasında işaretleyici devre dışı: dokunuş satıra gider,
-                    yoksa aynı hareket hem seçer hem görevi tamamlar. */}
-                <View pointerEvents={selection.active ? 'none' : 'auto'}>
-                  <Checkbox checked={done} onPress={() => toggleTask(item)} />
-                </View>
+          {/* Plan başlığı listenin dışında: sürüklenen hücrelerin ölçümüne karışmasın. */}
+          <View style={styles.planHeader}>
+            <TextInput
+              defaultValue={titleRef.current}
+              onChangeText={(text) => {
+                titleRef.current = text;
+              }}
+              onEndEditing={saveTitle}
+              placeholder="Plan adı"
+              placeholderTextColor={theme.textSecondary}
+              style={[styles.titleInput, { color: theme.text }]}
+              multiline
+            />
 
-                {editingTaskId === item.id ? (
-                  <TextInput
-                    autoFocus
-                    defaultValue={item.title}
-                    onChangeText={(text) => {
-                      draftRef.current = text;
-                    }}
-                    onBlur={() => finishEdit(item)}
-                    onSubmitEditing={() => finishEdit(item)}
-                    returnKeyType="done"
-                    placeholder="Görev"
-                    placeholderTextColor={theme.textSecondary}
-                    style={[styles.taskText, { color: theme.text }]}
-                  />
-                ) : (
-                  <ThemedText
-                    themeColor={done ? 'textSecondary' : 'text'}
-                    style={[styles.taskText, done && styles.doneText]}>
-                    {item.title}
-                  </ThemedText>
-                )}
+            <View style={styles.chipRow}>
+              {DUE_OPTIONS.map((option) => {
+                const value = option.value();
+                const selected = value === dueDate;
 
-                {selection.active ? null : (
+                return (
                   <Pressable
-                    onPress={() => removeTask(item)}
-                    hitSlop={Spacing.two}
-                    accessibilityRole="button"
-                    accessibilityLabel="Görevi sil">
-                    <ThemedText themeColor="textSecondary">✕</ThemedText>
+                    key={option.label}
+                    onPress={() => selectDue(value)}
+                    style={[
+                      styles.chip,
+                      {
+                        backgroundColor: selected
+                          ? theme.backgroundSelected
+                          : theme.backgroundElement,
+                      },
+                    ]}>
+                    <ThemedText type={selected ? 'smallBold' : 'small'}>{option.label}</ThemedText>
                   </Pressable>
-                )}
-              </Pressable>
-            );
-          }}
-          ListFooterComponent={
-            <View style={styles.footer}>
-              <View style={[styles.taskRow, { backgroundColor: theme.backgroundElement }]}>
-                <ThemedText themeColor="textSecondary">+</ThemedText>
-                <TextInput
-                  ref={newTaskInput}
-                  onChangeText={(text) => {
-                    newTaskRef.current = text;
-                  }}
-                  onSubmitEditing={addTask}
-                  submitBehavior="submit"
-                  returnKeyType="done"
-                  placeholder="Görev ekle"
-                  placeholderTextColor={theme.textSecondary}
-                  style={[styles.taskText, { color: theme.text }]}
-                />
-              </View>
-
-              {selection.active ? null : (
-                <Pressable onPress={confirmDeletePlan} style={styles.deleteButton}>
-                  <ThemedText type="small" style={{ color: theme.danger }}>
-                    Planı sil
-                  </ThemedText>
-                </Pressable>
-              )}
+                );
+              })}
             </View>
-          }
-        />
 
-        {selection.active ? (
-          <Fab action="delete" onPress={confirmDeleteSelected} bottomInset={0} />
-        ) : null}
-      </SafeAreaView>
-    </ThemedView>
+            {dueDate && dueDate !== todayYmd() && dueDate !== tomorrowYmd() ? (
+              <ThemedText type="small" themeColor="textSecondary">
+                Seçili tarih: {formatDue(dueDate)}
+              </ThemedText>
+            ) : null}
+          </View>
+
+          <ReorderableList
+            data={tasks}
+            keyExtractor={(item) => String(item.id)}
+            onReorder={handleReorder}
+            dragEnabled={list.reordering}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.list}
+            renderItem={({ item }) => (
+              <TaskRow
+                task={item}
+                mode={list.mode}
+                picked={list.has(item.id)}
+                editing={editingTaskId === item.id}
+                onStartEdit={() => setEditingTaskId(item.id)}
+                onSave={(value) => saveTask(item, value)}
+                onToggleDone={() => toggleDone(item)}
+                onToggle={() => list.toggle(item.id)}
+                onStartSelect={() => list.startSelect(item.id)}
+                onRemove={() => removeTask(item)}
+              />
+            )}
+            ListFooterComponent={
+              list.mode === 'normal' ? (
+                <View style={styles.footer}>
+                  <View style={[styles.addRow, { backgroundColor: theme.backgroundElement }]}>
+                    <ThemedText themeColor="textSecondary">+</ThemedText>
+                    <TextInput
+                      ref={newTaskInput}
+                      onChangeText={(text) => {
+                        newTaskRef.current = text;
+                      }}
+                      onSubmitEditing={addTask}
+                      submitBehavior="submit"
+                      returnKeyType="done"
+                      placeholder="Görev ekle"
+                      placeholderTextColor={theme.textSecondary}
+                      style={[styles.addInput, { color: theme.text }]}
+                    />
+                  </View>
+
+                  <Pressable onPress={confirmDeletePlan} style={styles.deleteButton}>
+                    <ThemedText type="small" style={{ color: theme.danger }}>
+                      Planı sil
+                    </ThemedText>
+                  </Pressable>
+                </View>
+              ) : null
+            }
+          />
+
+          {list.selecting ? (
+            <Fab action="delete" onPress={confirmDeleteSelected} bottomInset={0} />
+          ) : null}
+        </SafeAreaView>
+      </ThemedView>
+    </GestureHandlerRootView>
   );
 }
 
@@ -334,9 +311,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Spacing.two,
   },
-  list: {
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: Spacing.two,
-    paddingBottom: FabSize + Spacing.five,
   },
   planHeader: {
     gap: Spacing.two,
@@ -356,30 +334,26 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
     borderRadius: Spacing.four,
   },
-  taskRow: {
+  list: {
+    paddingBottom: FabSize + Spacing.five,
+  },
+  footer: {
+    gap: Spacing.two,
+    paddingTop: Spacing.two,
+  },
+  addRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.three,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
     borderRadius: Spacing.three,
-    // Seçili satırın çerçevesi burada açılır; her satırda durduğu için
-    // seçim sırasında yüksekliklerin oynamasını engelliyor.
-    borderWidth: 2,
-    borderColor: 'transparent',
   },
-  taskText: {
+  addInput: {
     flex: 1,
     fontSize: 16,
     lineHeight: 24,
     paddingVertical: Spacing.two,
-  },
-  doneText: {
-    textDecorationLine: 'line-through',
-  },
-  footer: {
-    gap: Spacing.two,
-    paddingTop: Spacing.two,
   },
   deleteButton: {
     paddingVertical: Spacing.three,

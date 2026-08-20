@@ -22,6 +22,8 @@ export const Colors = {
     onAccent: '#FFFFFF',
     /** Tarihi geçmiş planlar, silme eylemleri. */
     danger: '#B3261E',
+    /** Menü açıkken içeriğin üstüne inen perde. */
+    scrim: 'rgba(42, 36, 32, 0.3)',
   },
   dark: {
     text: '#F5EFE7',
@@ -32,6 +34,7 @@ export const Colors = {
     accent: '#E08A5F',
     onAccent: '#14110E',
     danger: '#F2B8B5',
+    scrim: 'rgba(0, 0, 0, 0.55)',
   },
 } as const;
 

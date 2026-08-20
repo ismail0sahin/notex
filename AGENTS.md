@@ -25,9 +25,17 @@ Arayüz metinleri Türkçe.
 - Ekran geçişleri `Modal` ile yapılıyor, ayrı route açılmıyor — `NativeTabs` altında
   sekme olmayan route'lar sorun çıkarıyor.
 - `src/components/app-tabs.tsx` — sekmeler (`NativeTabs`). Sekme adı dosya adıyla eşleşmeli.
-- `src/hooks/use-selection.ts` — çoklu seçim. Ayrı bir "mod" bayrağı yok: seçim
-  boş değilse mod açıktır, son öğe kalkınca kendiliğinden kapanır. Yeni bir listeye
-  çoklu seçim eklenecekse bu hook kullanılır, ikinci bir durum değişkeni açılmaz.
+- `src/hooks/use-list-mode.ts` — listelerin üç durumu: `normal`, `select`, `reorder`.
+  Uzun basış moda göre farklı iş yapıyor (normalde seçim açar, sıralamada sürükler),
+  o yüzden mod tek kaynaktan okunur. Yeni bir listeye bu davranış eklenecekse bu
+  hook kullanılır, ikinci bir durum değişkeni açılmaz.
+- `src/components/{note,plan,task}-row.tsx` — satırlar ayrı bileşen olmak **zorunda**:
+  `useReorderableDrag()` bir hook, `renderItem` gövdesinde çağrılamaz.
+- Satır aralığı listenin `contentContainerStyle` `gap`'inde değil, satırın kendi
+  `marginBottom`'unda. Sürüklenen hücrenin yüksekliği hesaplanırken kap boşluğu
+  hesaba girmiyor; `gap` kullanılırsa sürükleme kayıyor.
+- `PlanDetail` bir `Modal` içinde çalışıyor ve kendi `GestureHandlerRootView`'ini
+  sarıyor. Modal içindeki hareketler kök görünüm olmadan çalışmaz.
 - `src/lib/date.ts` — `YYYY-MM-DD` yerel tarih yardımcıları. `toISOString()` UTC'ye
   kaydırdığı için tarih üretmede kullanılmaz.
 - Stil: `ThemedText` / `ThemedView` + `Colors`/`Spacing` (`src/constants/theme.ts`).
@@ -58,6 +66,19 @@ Expo Go **54.0.8** elle kurulu ve Play Store otomatik güncellemesi kapalı olma
 `eas.json`'daki `development` profili `expo-dev-client` paketini ister; o paket
 kaldırıldı (kurulu olması `npm start`'ı Expo Go yerine geliştirme derlemesi moduna
 çeviriyor). Geliştirme derlemesine dönülürse paket yeniden kurulmalı.
+
+## Sıralama
+
+`notes`, `plans` ve `tasks` tablolarında `position` kolonu var; listeler
+`ORDER BY position` ile okunuyor. Otomatik sıralama (tamamlananları alta almak,
+tarihe göre dizmek) kaldırıldı — elle taşınan bir sırayla bir arada çalışmıyor,
+kullanıcı bir satırı taşıdıktan sonra geri zıplıyordu.
+
+Yeni kayıt eklerken `position` sorgunun içinde hesaplanıyor: not ve plan için
+`MIN(position) - 1` (başa), görev için `MAX(position) + 1` (sona). Böylece ekleme
+sırasında bütün satırların yeniden numaralanması gerekmiyor.
+
+Sürükleme bittiğinde `writePositions` sırayı 0..n-1 olarak tek işlemde yazıyor.
 
 ## Görseller
 

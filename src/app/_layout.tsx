@@ -1,5 +1,6 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import * as SplashScreen from 'expo-splash-screen';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SQLiteProvider } from 'expo-sqlite';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
@@ -25,11 +26,13 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <SQLiteProvider databaseName={DATABASE_NAME} onInit={migrateDbIfNeeded}>
-        <SplashGate />
-        <AppTabs />
-      </SQLiteProvider>
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <SQLiteProvider databaseName={DATABASE_NAME} onInit={migrateDbIfNeeded}>
+          <SplashGate />
+          <AppTabs />
+        </SQLiteProvider>
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }

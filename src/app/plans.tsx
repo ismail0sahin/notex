@@ -1,10 +1,16 @@
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, FlatList, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Modal, Pressable, StyleSheet, View } from 'react-native';
+import ReorderableList, {
+  reorderItems,
+  type ReorderableListReorderEvent,
+} from 'react-native-reorderable-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Fab } from '@/components/fab';
+import { ModeMenu } from '@/components/mode-menu';
 import { PlanDetail } from '@/components/plan-detail';
+import { PlanRow } from '@/components/plan-row';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { FabSize, MaxContentWidth, Spacing, TabBarHeight } from '@/constants/theme';
@@ -15,19 +21,18 @@ import {
   getPlan,
   listPlans,
   listTasks,
+  reorderPlans,
   type PlanWithProgress,
 } from '@/db';
-import { useSelection } from '@/hooks/use-selection';
-import { useTheme } from '@/hooks/use-theme';
-import { formatDue, isOverdue, todayYmd } from '@/lib/date';
+import { useListMode } from '@/hooks/use-list-mode';
+import { todayYmd } from '@/lib/date';
 
 /** + ile açılan plan bu adla oluşur; kullanıcı dokunmadan çıkarsa geri alınır. */
 const NEW_PLAN_TITLE = 'Yeni plan';
 
 export default function PlansScreen() {
   const db = useSQLiteContext();
-  const theme = useTheme();
-  const selection = useSelection();
+  const list = useListMode();
   const [plans, setPlans] = useState<PlanWithProgress[]>([]);
   const [openPlanId, setOpenPlanId] = useState<number | null>(null);
 
@@ -58,20 +63,28 @@ export default function PlansScreen() {
     reload();
   }
 
-  function confirmDeleteSelected() {
-    const count = selection.count;
+  /** Ekranda hemen uygula, sonra sırayı veritabanına yaz. */
+  async function handleReorder({ from, to }: ReorderableListReorderEvent) {
+    const next = reorderItems(plans, from, to);
+    setPlans(next);
+    await reorderPlans(
+      db,
+      next.map((plan) => plan.id)
+    );
+  }
 
+  function confirmDeleteSelected() {
     Alert.alert(
       'Seçilenleri sil',
-      `${count} plan ve içindeki bütün görevler kalıcı olarak silinecek.`,
+      `${list.count} plan ve içindeki bütün görevler kalıcı olarak silinecek.`,
       [
         { text: 'Vazgeç', style: 'cancel' },
         {
           text: 'Sil',
           style: 'destructive',
           onPress: async () => {
-            await deletePlans(db, selection.ids);
-            selection.clear();
+            await deletePlans(db, list.ids);
+            list.reset();
             reload();
           },
         },
@@ -88,95 +101,52 @@ export default function PlansScreen() {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
           <ThemedText type="subtitle">Planlar</ThemedText>
-          {selection.active ? (
-            <Pressable onPress={selection.clear} hitSlop={Spacing.two}>
-              <ThemedText themeColor="textSecondary">Vazgeç</ThemedText>
+          {list.mode === 'normal' ? (
+            <ModeMenu onReorder={list.startReorder} onSelect={() => list.startSelect()} />
+          ) : (
+            <Pressable onPress={list.reset} hitSlop={Spacing.two}>
+              <ThemedText themeColor="textSecondary">
+                {list.selecting ? 'Vazgeç' : 'Bitti'}
+              </ThemedText>
             </Pressable>
-          ) : null}
+          )}
         </View>
 
         <ThemedText type="small" themeColor="textSecondary">
-          {selection.active
-            ? `${selection.count} plan seçili`
-            : plans.length === 0
-              ? 'Plan yok'
-              : `${activeCount} plan sürüyor`}
+          {list.selecting
+            ? `${list.count} plan seçili`
+            : list.reordering
+              ? 'Taşımak için satırı basılı tutup sürükle'
+              : plans.length === 0
+                ? 'Plan yok'
+                : `${activeCount} plan sürüyor`}
         </ThemedText>
 
-        <FlatList
+        <ReorderableList
           data={plans}
           keyExtractor={(item) => String(item.id)}
+          onReorder={handleReorder}
+          dragEnabled={list.reordering}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
             <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
               Henüz plan yok. Sağ alttaki + ile bir plan oluştur, içine görevlerini ekle.
             </ThemedText>
           }
-          renderItem={({ item }) => {
-            const complete = item.task_count > 0 && item.done_count === item.task_count;
-            const dueLabel = formatDue(item.due_date);
-            const overdue = !complete && isOverdue(item.due_date);
-            const progress = item.task_count === 0 ? 0 : item.done_count / item.task_count;
-            const picked = selection.has(item.id);
-
-            return (
-              <Pressable
-                // Seçim açıkken dokunmak planı açmaz, seçimi değiştirir.
-                onPress={() =>
-                  selection.active ? selection.toggle(item.id) : setOpenPlanId(item.id)
-                }
-                onLongPress={() => selection.toggle(item.id)}
-                style={({ pressed }) => [
-                  styles.row,
-                  {
-                    backgroundColor:
-                      picked || pressed ? theme.backgroundSelected : theme.backgroundElement,
-                    borderColor: picked ? theme.accent : 'transparent',
-                  },
-                ]}>
-                <View style={styles.rowTop}>
-                  <ThemedText
-                    numberOfLines={2}
-                    themeColor={complete ? 'textSecondary' : 'text'}
-                    style={[styles.rowTitle, complete && styles.completeTitle]}>
-                    {item.title}
-                  </ThemedText>
-                  {dueLabel ? (
-                    <ThemedText
-                      type="small"
-                      themeColor="textSecondary"
-                      style={overdue ? { color: theme.danger } : undefined}>
-                      {dueLabel}
-                    </ThemedText>
-                  ) : null}
-                </View>
-
-                <ThemedText type="small" themeColor="textSecondary">
-                  {item.task_count === 0
-                    ? 'Görev yok'
-                    : `${item.done_count}/${item.task_count} görev tamam`}
-                </ThemedText>
-
-                {item.task_count > 0 ? (
-                  <View style={[styles.progressTrack, { backgroundColor: theme.background }]}>
-                    <View
-                      style={[
-                        styles.progressFill,
-                        { backgroundColor: theme.accent, width: `${progress * 100}%` },
-                      ]}
-                    />
-                  </View>
-                ) : null}
-              </Pressable>
-            );
-          }}
+          renderItem={({ item }) => (
+            <PlanRow
+              plan={item}
+              mode={list.mode}
+              picked={list.has(item.id)}
+              onOpen={() => setOpenPlanId(item.id)}
+              onToggle={() => list.toggle(item.id)}
+              onStartSelect={() => list.startSelect(item.id)}
+            />
+          )}
         />
 
-        {selection.active ? (
-          <Fab action="delete" onPress={confirmDeleteSelected} />
-        ) : (
-          <Fab onPress={addPlan} />
-        )}
+        {list.selecting ? <Fab action="delete" onPress={confirmDeleteSelected} /> : null}
+        {list.mode === 'normal' ? <Fab onPress={addPlan} /> : null}
       </SafeAreaView>
 
       <Modal
@@ -210,40 +180,10 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   list: {
-    gap: Spacing.two,
     paddingTop: Spacing.two,
     paddingBottom: TabBarHeight + FabSize + Spacing.four,
   },
   empty: {
     paddingVertical: Spacing.four,
-  },
-  row: {
-    gap: Spacing.two,
-    padding: Spacing.three,
-    borderRadius: Spacing.three,
-    // Seçili satırın çerçevesi burada açılır; her satırda durduğu için
-    // seçim sırasında yüksekliklerin oynamasını engelliyor.
-    borderWidth: 2,
-  },
-  rowTop: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: Spacing.three,
-  },
-  rowTitle: {
-    flex: 1,
-  },
-  completeTitle: {
-    textDecorationLine: 'line-through',
-  },
-  progressTrack: {
-    height: 4,
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: 4,
-    borderRadius: 2,
   },
 });

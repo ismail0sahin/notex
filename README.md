@@ -18,12 +18,19 @@ etiketlenir.
 
 Her planın tarihi olabilir: Bugün, Yarın ya da tarihsiz.
 
-**Çoklu seçim** — notlarda, planlarda ve plan içindeki görevlerde bir satıra
-uzun basmak seçim modunu açar.
-Sonrasında dokunmak satırı açmaz, seçime ekler ya da çıkarır; seçili satırlar
-aksan renkli çerçeveyle işaretlenir. Köşedeki `+` düğmesi kırmızı bir çöp
-kutusuna dönüşür ve seçilenleri tek seferde siler. Son seçim kalkınca ya da
-"Vazgeç"e basınca mod kapanır.
+**Modlar** — her listenin sağ üstünde bir `⋮` düğmesi var: "Sırala" ve "Seç".
+
+*Sıralama modunda* satırı basılı tutup yukarı aşağı taşıyorsun; sıra cihazda
+kalıcı olarak saklanır. *Seçim modunda* satırlara dokunarak birden fazlasını
+seçip köşedeki çöp kutusuyla siliyorsun. Her iki mod da başlıktaki "Bitti" /
+"Vazgeç" ile kapanır.
+
+Seçim moduna kısayol: satıra uzun basmak da doğrudan açar (sıralama modunda
+uzun basış sürüklemeye ayrıldığı için orada geçerli değil).
+Listelerin sırası tamamen senin elinde: otomatik sıralama yok. Yeni not ve yeni
+plan listenin başına, yeni görev listenin sonuna eklenir. Tamamlanan planlar ve
+işaretlenen görevler yerinde kalır, kendiliğinden aşağı inmez — elle taşınan bir
+sırayla otomatik sıralama bir arada çalışmaz.
 
 ## Kurulum
 

@@ -1,7 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 export const DATABASE_NAME = 'notex.db';
-const DATABASE_VERSION = 2;
+const DATABASE_VERSION = 3;
 
 export type Note = {
   id: number;
@@ -9,6 +9,7 @@ export type Note = {
   body: string;
   created_at: string;
   updated_at: string;
+  position: number;
 };
 
 export type Plan = {
@@ -16,6 +17,7 @@ export type Plan = {
   title: string;
   due_date: string | null;
   created_at: string;
+  position: number;
 };
 
 /** Liste satırlarında ilerlemeyi göstermek için sayaçlarla birlikte. */
@@ -30,6 +32,7 @@ export type Task = {
   title: string;
   done: number;
   created_at: string;
+  position: number;
 };
 
 /**
@@ -89,21 +92,64 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
     currentDbVersion = 2;
   }
 
+  if (currentDbVersion === 2) {
+    // Sıra artık kullanıcının elinde. position, o ana kadarki otomatik sıralamayla
+    // doldurulur; böylece eldeki listeler göz önünde yer değiştirmez.
+    // Sayaçlı alt sorgu, pencere fonksiyonuna gerek kalmadan aynı işi yapıyor.
+    await db.execAsync(`
+      ALTER TABLE notes ADD COLUMN position INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE plans ADD COLUMN position INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE tasks ADD COLUMN position INTEGER NOT NULL DEFAULT 0;
+
+      UPDATE notes SET position = (
+        SELECT COUNT(*) FROM notes AS other WHERE other.updated_at > notes.updated_at
+      );
+
+      UPDATE plans SET position = (
+        SELECT COUNT(*) FROM plans AS other WHERE other.created_at > plans.created_at
+      );
+
+      UPDATE tasks SET position = (
+        SELECT COUNT(*) FROM tasks AS other
+        WHERE other.plan_id = tasks.plan_id
+          AND (
+            other.done < tasks.done
+            OR (other.done = tasks.done AND other.created_at < tasks.created_at)
+          )
+      );
+    `);
+    currentDbVersion = 3;
+  }
+
   await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
 }
 
 const now = () => new Date().toISOString();
 
+/**
+ * Sürükleyip bırakma sonrası sırayı yazar. Tablo adı yalnızca bu dosyadan
+ * geliyor, kullanıcı girdisi değil; kimlikler bağlı parametre olarak geçiyor.
+ */
+async function writePositions(db: SQLiteDatabase, table: string, ids: readonly number[]) {
+  await db.withTransactionAsync(async () => {
+    for (let index = 0; index < ids.length; index += 1) {
+      await db.runAsync(`UPDATE ${table} SET position = ? WHERE id = ?`, index, ids[index]);
+    }
+  });
+}
+
 // --- Notlar ---
 
 export function listNotes(db: SQLiteDatabase) {
-  return db.getAllAsync<Note>('SELECT * FROM notes ORDER BY updated_at DESC');
+  return db.getAllAsync<Note>('SELECT * FROM notes ORDER BY position ASC, id ASC');
 }
 
+/** Yeni not listenin başına gelir. */
 export function createNote(db: SQLiteDatabase, title: string, body: string) {
   const ts = now();
   return db.runAsync(
-    'INSERT INTO notes (title, body, created_at, updated_at) VALUES (?, ?, ?, ?)',
+    `INSERT INTO notes (title, body, created_at, updated_at, position)
+     VALUES (?, ?, ?, ?, (SELECT COALESCE(MIN(position), 0) - 1 FROM notes))`,
     title,
     body,
     ts,
@@ -133,9 +179,12 @@ export function deleteNotes(db: SQLiteDatabase, ids: readonly number[]) {
   return db.runAsync(`DELETE FROM notes WHERE id IN (${placeholders})`, ...ids);
 }
 
+export function reorderNotes(db: SQLiteDatabase, ids: readonly number[]) {
+  return writePositions(db, 'notes', ids);
+}
+
 // --- Planlar ---
 
-/** Tamamlananlar en sona, sonra tarihe göre; tarihsizler tarihlilerin ardından. */
 export function listPlans(db: SQLiteDatabase) {
   return db.getAllAsync<PlanWithProgress>(
     `SELECT
@@ -143,11 +192,7 @@ export function listPlans(db: SQLiteDatabase) {
        (SELECT COUNT(*) FROM tasks t WHERE t.plan_id = p.id) AS task_count,
        (SELECT COUNT(*) FROM tasks t WHERE t.plan_id = p.id AND t.done = 1) AS done_count
      FROM plans p
-     ORDER BY
-       (task_count > 0 AND done_count = task_count) ASC,
-       due_date IS NULL ASC,
-       due_date ASC,
-       created_at DESC`
+     ORDER BY p.position ASC, p.id ASC`
   );
 }
 
@@ -155,9 +200,11 @@ export function getPlan(db: SQLiteDatabase, id: number) {
   return db.getFirstAsync<Plan>('SELECT * FROM plans WHERE id = ?', id);
 }
 
+/** Yeni plan listenin başına gelir. */
 export async function createPlan(db: SQLiteDatabase, title: string, dueDate: string | null) {
   const result = await db.runAsync(
-    'INSERT INTO plans (title, due_date, created_at) VALUES (?, ?, ?)',
+    `INSERT INTO plans (title, due_date, created_at, position)
+     VALUES (?, ?, ?, (SELECT COALESCE(MIN(position), 0) - 1 FROM plans))`,
     title,
     dueDate,
     now()
@@ -187,22 +234,28 @@ export function deletePlans(db: SQLiteDatabase, ids: readonly number[]) {
   return db.runAsync(`DELETE FROM plans WHERE id IN (${placeholders})`, ...ids);
 }
 
+export function reorderPlans(db: SQLiteDatabase, ids: readonly number[]) {
+  return writePositions(db, 'plans', ids);
+}
+
 // --- Görevler ---
 
-/** Bitmeyenler önce, her grup içinde eklenme sırasına göre. */
 export function listTasks(db: SQLiteDatabase, planId: number) {
   return db.getAllAsync<Task>(
-    'SELECT * FROM tasks WHERE plan_id = ? ORDER BY done ASC, created_at ASC, id ASC',
+    'SELECT * FROM tasks WHERE plan_id = ? ORDER BY position ASC, id ASC',
     planId
   );
 }
 
+/** Yeni görev listenin sonuna eklenir — checklist doldurma yönü bu. */
 export function createTask(db: SQLiteDatabase, planId: number, title: string) {
   return db.runAsync(
-    'INSERT INTO tasks (plan_id, title, done, created_at) VALUES (?, ?, 0, ?)',
+    `INSERT INTO tasks (plan_id, title, done, created_at, position)
+     VALUES (?, ?, 0, ?, (SELECT COALESCE(MAX(position), -1) + 1 FROM tasks WHERE plan_id = ?))`,
     planId,
     title,
-    now()
+    now(),
+    planId
   );
 }
 
@@ -224,4 +277,8 @@ export function deleteTasks(db: SQLiteDatabase, ids: readonly number[]) {
 
   const placeholders = ids.map(() => '?').join(', ');
   return db.runAsync(`DELETE FROM tasks WHERE id IN (${placeholders})`, ...ids);
+}
+
+export function reorderTasks(db: SQLiteDatabase, ids: readonly number[]) {
+  return writePositions(db, 'tasks', ids);
 }
