@@ -1,56 +1,137 @@
-# Welcome to your Expo app 👋
+# Notex
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Çevrimdışı çalışan not ve plan uygulaması. Hedef platform Android.
 
-## Get started
+Veri tamamen cihazda, bir SQLite dosyasında (`notex.db`) tutulur. Sunucu, hesap,
+oturum açma ve senkronizasyon yok; uygulama internet bağlantısı olmadan çalışır.
 
-1. Install dependencies
+## Ne yapar
 
-   ```bash
-   npm install
-   ```
+**Notlar** — başlık ve içerik. Son düzenlenen en üstte. Satıra dokunup düzenle,
+uzun basıp sil.
 
-2. Start the app
+**Planlar** — bir plan tek bir görev değil, görev listesidir. Plana girip alt alta
+görev eklersin, işaretleyerek tamamlarsın. Planın tamamlanma oranı görevlerinden
+hesaplanır; listede `3/5 görev tamam` ve ince bir ilerleme çubuğu görünür. Tümü
+biten planlar üstü çizili olarak listenin altına iner, tarihi geçmişler kırmızı
+etiketlenir.
 
-   ```bash
-   npx expo start
-   ```
+Her planın tarihi olabilir: Bugün, Yarın ya da tarihsiz.
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Kurulum
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Telefonda çalıştırma
 
-### Other setup steps
+Proje Expo SDK 54 kullanıyor. Play Store'daki Expo Go SDK 57'ye göredir ve bu
+projeyi **açmaz**. Telefona SDK 54 uyumlu sürümü elle kurmak gerekiyor:
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+<https://github.com/expo/expo-go-releases/releases/download/Expo-Go-54.0.8/Expo-Go-54.0.8.apk>
 
-## Learn more
+Kurmadan önce mevcut Expo Go'yu kaldır (paket adı aynı olduğu için Android
+üzerine yazmaz) ve Play Store'da otomatik güncellemeyi kapat, yoksa 57'ye geri
+çeker.
 
-To learn more about developing your project with Expo, look at the following resources:
+Sonra:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+npm start
+```
 
-## Join the community
+QR'ı Expo Go içinden okut. Telefon ve bilgisayar aynı Wi-Fi'da olmalı; ağ
+bloklarsa `npx expo start --tunnel`.
 
-Join our community of developers creating universal apps.
+## Derleme
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Profiller `eas.json` içinde. Kurulabilir APK için:
+
+```bash
+npx eas-cli build --profile preview -p android
+```
+
+Ücretsiz bir Expo hesabı gerekiyor. Yerel Android SDK gerekmez, derleme bulutta
+çalışır.
+
+Uygulama ikonu ve açılış ekranı **native yapılandırmadır**; Expo Go'da görünmez.
+Bunları görmek için gerçek bir derleme almak gerekir.
+
+## Proje yapısı
+
+| Dosya | İş |
+| --- | --- |
+| `src/db/index.ts` | Şema, migration ve bütün SQL sorguları |
+| `src/app/_layout.tsx` | `SQLiteProvider`, tema, açılış ekranının kapatılması |
+| `src/app/index.tsx` | Notlar sekmesi |
+| `src/app/plans.tsx` | Planlar sekmesi (plan listesi) |
+| `src/components/plan-detail.tsx` | Bir planın içi: başlık, tarih, görev listesi |
+| `src/components/app-tabs.tsx` | Sekmeler; adları dosya adlarıyla eşleşir |
+| `src/constants/theme.ts` | Bütün renkler ve boşluklar |
+| `src/lib/date.ts` | `YYYY-MM-DD` yerel tarih yardımcıları |
+| `scripts/make-icons.py` | İkon ve açılış görseli üretici |
+
+Ekran geçişleri `Modal` ile yapılıyor, ayrı route açılmıyor — `NativeTabs` altında
+sekme olmayan route'lar sorun çıkarıyor.
+
+## Veri modeli
+
+Üç tablo: `notes`, `plans`, `tasks`. Görevler planına `ON DELETE CASCADE` ile
+bağlı, yani plan silinince görevleri de gider.
+
+Şema `PRAGMA user_version` ile versiyonlu. Değişiklik gerektiğinde
+`src/db/index.ts` içindeki `DATABASE_VERSION` artırılır ve `migrateDbIfNeeded`
+sonuna yeni bir blok eklenir. Var olan bloklar düzenlenmez — kurulu
+uygulamalardaki veri bozulur.
+
+## Renkler
+
+Palet "Kağıt": kremli zemin, toprak tonu aksan. Bütün renkler
+`src/constants/theme.ts` içindeki `Colors` nesnesinde, açık ve koyu tema için
+ayrı. `theme.ts` dışında hiçbir dosyada ham renk kodu yok — paleti değiştirmek
+için tek dosya yeter.
+
+Token'lar: `text`, `textSecondary`, `background`, `backgroundElement`,
+`backgroundSelected`, `accent`, `onAccent`, `danger`.
+
+## İkonlar
+
+İkonlar elle çizilmedi, koddan üretiliyor. Bağımlılık gerekmez (PIL kurmaya
+gerek yok):
+
+```bash
+python scripts/make-icons.py
+```
+
+Marka, script'in başındaki `MARK` listesinde kapsül olarak tanımlı: iki not
+satırı ve bir onay işareti. Değiştirip yeniden çalıştırmak `assets/images/`
+altındaki altı görseli birden yeniler.
+
+## Kontroller
+
+```bash
+npx tsc --noEmit
+npx expo lint
+npx expo-doctor
+npx expo export --platform android
+```
+
+Son komut, uygulamayı telefonda açmadan bundle'ın gerçekten derlendiğini
+doğrular. Ürettiği `dist/` klasörü silinebilir.
+
+## Bilinmesi gerekenler
+
+**Neden SDK 54?** Proje SDK 57 template'iyle kuruldu, sonra 54'e indirildi.
+Gerekçe "Android'de ş/ğ yazılamıyor" sorunuydu ve o teşhis yanlıştı: sorun
+Android emülatörünün bilgisayar klavyesini keycode olarak taşımasından
+kaynaklanıyordu, bu harflerin keycode'u yok. Gerçek telefonda her iki sürümde de
+sorunsuz. 54'te kalma kararı bilinçli; yükseltmek isterseniz `AGENTS.md`
+template yamalarını listeliyor.
+
+**Emülatörde Türkçe yazmak** — cihaz ayarlarından "Enable keyboard input"
+kapatılıp emülatörün kendi ekran klavyesi kullanılmalı.
+
+**Metin alanları kontrolsüz** (`defaultValue` + ref). Her tuşta metni state
+üzerinden `value` olarak geri yazmak Android klavyesinde harf düşmesine yol
+açıyor. Bu yüzden yeni bir `TextInput` eklerken aynı deseni izleyin.
