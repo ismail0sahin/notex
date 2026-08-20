@@ -1,0 +1,7 @@
+# Satır sonlarını depoda ve çalışma kopyasında LF olarak sabitler.
+# Windows/macOS arasında sahte diff çıkmasını önler.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ttf binary
