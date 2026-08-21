@@ -24,14 +24,14 @@ türde olacağını sorar:
 Not ve plan sayfaları sağdan kayarak açılır, sol üstteki `←` ile kapanır.
 
 Yazma satırı plan içinde en üstte sabit durur; yazdığın satır onun hemen altına
-eklenir, liste kaydırılsa da yazma satırı kaybolmaz. Görev metnine dokunmak o satırı düzenlemeye
-açar; boşaltıp çıkarsan satır silinir. Satırları silmek ve sıralamak için plan
-içindeki `⋮` menüsü kullanılır — listelerdeki mantığın aynısı. Çizelgelerde liste satırında günün
-kapsamı da görünür (`09:00 – 17:30`). Planın tamamlanma oranı görevlerinden
-hesaplanır; listede `3/5 görev tamam` ve ince bir ilerleme çubuğu görünür. Tümü
-biten planlar üstü çizili olarak listenin altına iner, tarihi geçmişler kırmızı
-etiketlenir.
+eklenir, liste kaydırılsa da yazma satırı kaybolmaz. Görev metnine dokunmak o
+satırı düzenlemeye açar; boşaltıp çıkarsan satır silinir. Satırları silmek ve
+sıralamak için plan içindeki `⋮` menüsü kullanılır — listelerdeki mantığın aynısı.
 
+Tamamlanan görev ve tümü biten planlarda yazı değişmez, satırın zemini değişir —
+aksan renginin zemine karışmış hâli. Planın tamamlanma oranı görevlerinden hesaplanır; listede
+`3/5 görev tamam` ve ince bir ilerleme çubuğu görünür. Çizelgelerde liste
+satırında günün kapsamı da yazar (`09:00 – 17:30`).
 
 **Modlar** — her listenin sağ üstünde bir `⋮` düğmesi var: "Sırala" ve "Seç".
 
@@ -42,10 +42,11 @@ seçip köşedeki çöp kutusuyla siliyorsun. Her iki mod da başlıktaki "Bitti
 
 Seçim moduna kısayol: satıra uzun basmak da doğrudan açar (sıralama modunda
 uzun basış sürüklemeye ayrıldığı için orada geçerli değil).
-Listelerin sırası tamamen senin elinde: otomatik sıralama yok. Yeni not ve yeni
-plan listenin başına, yeni görev listenin sonuna eklenir. Tamamlanan planlar ve
-işaretlenen görevler yerinde kalır, kendiliğinden aşağı inmez — elle taşınan bir
-sırayla otomatik sıralama bir arada çalışmaz.
+
+Listelerin sırası senin elinde: otomatik sıralama yok. Yeni kayıt her zaman
+listenin başına eklenir. Tamamlanan planlar ve işaretlenen görevler yerinde
+kalır — tek istisna alışveriş listesi, orada tiklenen satır alta iner. Elle
+taşınan bir sırayla otomatik sıralama bir arada çalışmaz.
 
 ## Kurulum
 
@@ -95,11 +96,12 @@ Bunları görmek için gerçek bir derleme almak gerekir.
 | `src/app/_layout.tsx` | `SQLiteProvider`, tema, açılış ekranının kapatılması |
 | `src/app/index.tsx` | Notlar sekmesi |
 | `src/app/plans.tsx` | Planlar sekmesi (plan listesi) |
-| `src/components/plan-detail.tsx` | Bir planın içi: başlık, tarih, görev listesi |
+| `src/components/plan-detail.tsx` | Bir planın içi: başlık ve görev listesi |
 | `src/components/app-tabs.tsx` | Sekmeler; adları dosya adlarıyla eşleşir |
 | `src/constants/theme.ts` | Bütün görsel tercihler: renk, boşluk, ölçü, süre |
 | `src/constants/strings.ts` | Arayüzde geçen bütün metinler |
-| `src/lib/date.ts` | `YYYY-MM-DD` yerel tarih yardımcıları |
+| `src/lib/date.ts` | Yerel tarih ve `HH:MM` saat yardımcıları |
+| `src/lib/note.ts` | Boş başlığı notun ilk satırından türetme |
 | `scripts/make-icons.py` | İkon ve açılış görseli üretici |
 
 Ekran geçişleri `Modal` ile yapılıyor, ayrı route açılmıyor — `NativeTabs` altında
@@ -139,9 +141,15 @@ gerek yok):
 python scripts/make-icons.py
 ```
 
-Marka, script'in başındaki `MARK` listesinde kapsül olarak tanımlı: iki not
-satırı ve bir onay işareti. Değiştirip yeniden çalıştırmak `assets/images/`
-altındaki beş görseli birden yeniler.
+Şekiller script'in başındaki listelerde kapsül (yuvarlak uçlu kalın çizgi)
+olarak tanımlı: `MARK` uygulama markası (iki not satırı + onay işareti),
+`NOTES_MARK` ve `PLANS_MARK` ise sekme ikonları. Değiştirip yeniden çalıştırmak
+`assets/images/` altındaki bütün görselleri yeniler — uygulama ikonu, Android
+uyarlanabilir ikonun üç katmanı, açılış görseli ve sekme ikonları.
+
+Sekme ikonları iki durumlu (`notes.png` / `notes-on.png`): `NativeTabs` ikonu
+boyamıyor, renk PNG'nin içinde. Tek bir siyah maske kullanılsa koyu temada
+kaybolurdu.
 
 ## Kontroller
 

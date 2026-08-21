@@ -64,17 +64,17 @@ export function PlanRow({
       style={({ pressed }) => [
         styles.row,
         {
-          backgroundColor: picked || pressed ? theme.backgroundSelected : theme.backgroundElement,
-          borderColor: picked ? theme.accent : 'transparent',
+          backgroundColor:
+            picked || pressed
+              ? theme.backgroundSelected
+              : complete
+                ? theme.backgroundDone
+                : theme.backgroundElement,
+          borderColor: picked ? theme.accent : theme.borderSubtle,
         },
       ]}>
       <View style={styles.body}>
-        <ThemedText
-          numberOfLines={2}
-          themeColor={complete ? 'textSecondary' : 'text'}
-          style={complete && styles.completeTitle}>
-          {plan.title}
-        </ThemedText>
+        <ThemedText numberOfLines={2}>{plan.title}</ThemedText>
 
         <ThemedText type="small" themeColor="textSecondary">
           {secondary}
@@ -110,9 +110,6 @@ const styles = StyleSheet.create({
   body: {
     flex: 1,
     gap: Spacing.two,
-  },
-  completeTitle: {
-    textDecorationLine: 'line-through',
   },
   progressTrack: {
     height: Sizes.progressBar,

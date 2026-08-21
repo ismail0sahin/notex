@@ -229,6 +229,8 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
             multiline
           />
 
+          <View style={[styles.headerRule, { backgroundColor: theme.borderSubtle }]} />
+
           {/* Yazma satırı listenin dışında ve üstünde: liste kaydırılsa da yerinde
               kalıyor, yazılan satır da hemen altında görünüyor. */}
           {list.mode === 'normal' ? (
@@ -344,6 +346,10 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.heading,
     paddingTop: Spacing.two,
     paddingBottom: Spacing.three,
+  },
+  headerRule: {
+    height: Sizes.hairline,
+    marginBottom: Spacing.three,
   },
   columnHeader: {
     flexDirection: 'row',

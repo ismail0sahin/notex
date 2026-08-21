@@ -14,6 +14,10 @@ export const Colors = {
   light: {
     text: '#2A2420',
     textSecondary: '#6E645A',
+    /** Tamamlanan satırın zemini: aksanın zemine karışmış hâli. */
+    backgroundDone: '#F3E6DD',
+    /** Kartların kenar çizgisi. Zeminle satırı ayırıp yüzeye şekil veriyor. */
+    borderSubtle: '#E2D8C8',
     background: '#FBF8F3',
     backgroundElement: '#F2ECE2',
     backgroundSelected: '#E7DFD1',
@@ -29,6 +33,8 @@ export const Colors = {
   dark: {
     text: '#F5EFE7',
     textSecondary: '#A99B8C',
+    backgroundDone: '#3D2C23',
+    borderSubtle: '#2C2620',
     background: '#14110E',
     backgroundElement: '#201C18',
     backgroundSelected: '#2C2620',
@@ -119,7 +125,9 @@ export const Sizes = {
   /** İlerleme çubuğu. */
   progressBar: 4,
   /** Yapılacaklarla bitenleri ayıran çizgi. */
-  divider: 1,
+  divider: 2,
+  /** Başlık altındaki ince ayrım çizgisi. */
+  hairline: 1,
 } as const;
 
 /**

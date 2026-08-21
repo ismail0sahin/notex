@@ -16,7 +16,7 @@ import { SlidePanel } from '@/components/slide-panel';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Strings } from '@/constants/strings';
-import { MaxContentWidth, Sizes, Spacing, TabBarHeight } from '@/constants/theme';
+import { MaxContentWidth, Radius, Sizes, Spacing, TabBarHeight } from '@/constants/theme';
 import {
   createPlan,
   deletePlan,
@@ -29,9 +29,11 @@ import {
   type PlanWithProgress,
 } from '@/db';
 import { useListMode } from '@/hooks/use-list-mode';
+import { useTheme } from '@/hooks/use-theme';
 
 export default function PlansScreen() {
   const db = useSQLiteContext();
+  const theme = useTheme();
   const list = useListMode();
   const [plans, setPlans] = useState<PlanWithProgress[]>([]);
   const [openPlanId, setOpenPlanId] = useState<number | null>(null);
@@ -121,6 +123,8 @@ export default function PlansScreen() {
           {statusLine()}
         </ThemedText>
 
+        <View style={[styles.headerRule, { backgroundColor: theme.borderSubtle }]} />
+
         <ReorderableList
           data={plans}
           keyExtractor={(item) => String(item.id)}
@@ -128,9 +132,11 @@ export default function PlansScreen() {
           dragEnabled={list.reordering}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
-            <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
-              {Strings.plans.empty}
-            </ThemedText>
+            <View style={[styles.empty, { borderColor: theme.borderSubtle }]}>
+              <ThemedText type="small" themeColor="textSecondary" style={styles.emptyText}>
+                {Strings.plans.empty}
+              </ThemedText>
+            </View>
           }
           renderItem={({ item }) => (
             <PlanRow
@@ -187,7 +193,19 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.two,
     paddingBottom: TabBarHeight + Sizes.fab + Spacing.four,
   },
+  headerRule: {
+    height: Sizes.hairline,
+    marginBottom: Spacing.one,
+  },
+  // Boş liste boşluk gibi durmasın: kesikli çerçeve "buraya eklenecek" diyor.
   empty: {
-    paddingVertical: Spacing.four,
+    marginTop: Spacing.four,
+    padding: Spacing.four,
+    borderWidth: Sizes.selectionBorder,
+    borderStyle: 'dashed',
+    borderRadius: Radius.medium,
+  },
+  emptyText: {
+    textAlign: 'center',
   },
 });

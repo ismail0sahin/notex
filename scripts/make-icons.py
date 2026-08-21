@@ -14,12 +14,31 @@ TERRACOTTA = (0xB9, 0x5F, 0x3B)
 CREAM = (0xFB, 0xF8, 0xF3)
 WHITE = (0xFF, 0xFF, 0xFF)
 
+# Sekme cubugu renkleri. Ikon rengi PNG'ye gomulu (NativeTabs boyama yapmiyor),
+# o yuzden hem krem hem koyu kahve cubukta okunan tonlar secildi.
+TAB_OFF = (0x8A, 0x7D, 0x70)
+TAB_ON = TERRACOTTA
+
 # Marka, 1000x1000 birim kutuda: (ax, ay, bx, by, yaricap)
 MARK = [
     (170, 250, 830, 250, 58),
     (170, 430, 600, 430, 58),
     (195, 690, 365, 840, 66),
     (365, 840, 820, 640, 66),
+]
+
+
+# Notlar sekmesi: uc metin satiri.
+NOTES_MARK = [
+    (140, 260, 860, 260, 80),
+    (140, 500, 860, 500, 80),
+    (140, 740, 560, 740, 80),
+]
+
+# Planlar sekmesi: onay isareti.
+PLANS_MARK = [
+    (160, 560, 400, 800, 95),
+    (400, 800, 840, 300, 95),
 ]
 
 
@@ -33,17 +52,17 @@ def capsule_distance(px, py, ax, ay, bx, by, r):
     return math.sqrt(dx * dx + dy * dy) - r
 
 
-def mark_bounds():
+def mark_bounds(mark):
     xs, ys = [], []
-    for ax, ay, bx, by, r in MARK:
+    for ax, ay, bx, by, r in mark:
         xs += [ax - r, ax + r, bx - r, bx + r]
         ys += [ay - r, ay + r, by - r, by + r]
     return min(xs), min(ys), max(xs), max(ys)
 
 
-def place(size, fill_ratio):
+def place(size, fill_ratio, mark):
     """Markayi tuvale olcekleyip ortalar; (olcek, dx, dy) dondurur."""
-    x0, y0, x1, y1 = mark_bounds()
+    x0, y0, x1, y1 = mark_bounds(mark)
     w, h = x1 - x0, y1 - y0
     scale = (size * fill_ratio) / max(w, h)
     dx = (size - w * scale) / 2 - x0 * scale
@@ -51,12 +70,12 @@ def place(size, fill_ratio):
     return scale, dx, dy
 
 
-def render(size, fill_ratio, mark_rgb, bg_rgb=None):
+def render(size, fill_ratio, mark_rgb, bg_rgb=None, mark=MARK):
     """RGBA piksel satirlari uretir. bg_rgb None ise zemin seffaf kalir."""
-    scale, dx, dy = place(size, fill_ratio)
+    scale, dx, dy = place(size, fill_ratio, mark)
     segments = [
         (ax * scale + dx, ay * scale + dy, bx * scale + dx, by * scale + dy, r * scale)
-        for ax, ay, bx, by, r in MARK
+        for ax, ay, bx, by, r in mark
     ]
 
     # Her sekil icin sinir kutusu; uzak pikseller mesafe hesabina girmez.
@@ -131,6 +150,13 @@ write_png(A + 'android-icon-background.png', 1024, [
 ])
 write_png(A + 'android-icon-foreground.png', 1024, render(1024, 0.44, CREAM))
 write_png(A + 'android-icon-monochrome.png', 1024, render(1024, 0.44, WHITE))
+
+# Sekme ikonlari. NativeTabs iki durum aliyor (src={{default, selected}}),
+# o yuzden her ikon secili ve secili olmayan hâliyle ayri dosya.
+for name, mark in (('notes', NOTES_MARK), ('plans', PLANS_MARK)):
+    for suffix, px in (('', 24), ('@2x', 48), ('@3x', 72)):
+        write_png(f'{A}tabIcons/{name}{suffix}.png', px, render(px, 0.86, TAB_OFF, mark=mark))
+        write_png(f'{A}tabIcons/{name}-on{suffix}.png', px, render(px, 0.86, TAB_ON, mark=mark))
 
 # Acilis ekrani: krem zemin uzerine terracotta marka (zemin app.json'da).
 write_png(A + 'splash-icon.png', 512, render(512, 0.82, TERRACOTTA))

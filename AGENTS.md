@@ -54,6 +54,16 @@ Arayüz metinleri Türkçe.
     (`Strings.notes.selected(3)`), böylece dilbilgisi de tek yerde kalıyor.
   - `theme.ts` — `Colors`, `Spacing`, `FontSize`, `LineHeight`, `FontWeight`,
     `Radius`, `Sizes`, `Motion`, `Glyphs`, `TabBarHeight`, `MaxContentWidth`.
+- Tamamlanan öğede yazı değişmez, **kutucuğun zemini** değişir:
+  `Colors.backgroundDone` (aksanın zemine karışmış hâli). Üstünü çizmek metni
+  okunmaz yapıyordu, yazıyı soluklaştırmak da yetersiz kalıyordu.
+- Bütün kartların duran hâlinde `Colors.borderSubtle` çerçevesi var; seçilince
+  `accent`'e dönüyor. Çerçeve her zaman duruyor (eskiden şeffaftı), yoksa seçim
+  anında satır yükseklikleri oynuyor.
+- Sekme ikonları `NativeTabs` tarafından boyanmıyor — renk PNG'nin içinde. Bu
+  yüzden her ikon iki dosya: `notes.png` (seçili değil, ılık gri) ve
+  `notes-on.png` (seçili, aksan). Tek siyah maske kullanılırsa koyu temada
+  kayboluyor; template'ten gelen `renderingMode="template"` SDK 54'te yok.
 - Hedef yalnızca Android: web desteği (`react-native-web`, `react-dom`, `.web.tsx`
   dosyaları, `app.json`'daki `web` bloğu, favicon) kaldırıldı. Web geri istenirse
   bunların hepsi yeniden eklenmeli.
@@ -91,7 +101,8 @@ kaldırıldı (kurulu olması `npm start`'ı Expo Go yerine geliştirme derlemes
 `plans.kind` üç değer alır: `checklist`, `sorted` ve `schedule`.
 
 `sorted` planlarda tamamlanan satırlar alta iner (`listTasks`'in `sinkDone`
-parametresi, sıralama SQL'de) ve iki grubun arasına ince bir çizgi çiziliyor.
+parametresi, sıralama SQL'de) ve iki grubun arasına kenardan kenara bir çizgi
+çiziliyor.
 Çizgi sıralama modunda gizleniyor: sürüklenen hücrenin içinde kalıp satırla
 birlikte oynuyordu. Her grubun içinde elle verilen `position` sırası
 korunuyor, yani sürükleme yapılacaklar grubunun içinde hâlâ anlamlı.

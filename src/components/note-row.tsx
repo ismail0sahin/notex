@@ -53,7 +53,7 @@ export function NoteRow({
         styles.row,
         {
           backgroundColor: picked || pressed ? theme.backgroundSelected : theme.backgroundElement,
-          borderColor: picked ? theme.accent : 'transparent',
+          borderColor: picked ? theme.accent : theme.borderSubtle,
         },
       ]}>
       <View style={styles.body}>

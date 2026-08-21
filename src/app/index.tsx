@@ -20,6 +20,7 @@ import {
   FontWeight,
   LineHeight,
   MaxContentWidth,
+  Radius,
   Sizes,
   Spacing,
   TabBarHeight,
@@ -107,6 +108,12 @@ export default function NotesScreen() {
     ]);
   }
 
+  function statusLine() {
+    if (list.selecting) return Strings.notes.selected(list.count);
+    if (list.reordering) return Strings.modes.reorderHintList;
+    return Strings.notes.count(notes.length);
+  }
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -123,11 +130,11 @@ export default function NotesScreen() {
           )}
         </View>
 
-        {list.mode === 'normal' ? null : (
-          <ThemedText type="small" themeColor="textSecondary">
-            {list.selecting ? Strings.notes.selected(list.count) : Strings.modes.reorderHintList}
-          </ThemedText>
-        )}
+        <ThemedText type="small" themeColor="textSecondary">
+          {statusLine()}
+        </ThemedText>
+
+        <View style={[styles.headerRule, { backgroundColor: theme.borderSubtle }]} />
 
         <ReorderableList
           data={notes}
@@ -136,9 +143,11 @@ export default function NotesScreen() {
           dragEnabled={list.reordering}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
-            <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
-              {Strings.notes.empty}
-            </ThemedText>
+            <View style={[styles.empty, { borderColor: theme.borderSubtle }]}>
+              <ThemedText type="small" themeColor="textSecondary" style={styles.emptyText}>
+                {Strings.notes.empty}
+              </ThemedText>
+            </View>
           }
           renderItem={({ item }) => (
             <NoteRow
@@ -220,8 +229,20 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.two,
     paddingBottom: TabBarHeight + Sizes.fab + Spacing.four,
   },
+  headerRule: {
+    height: Sizes.hairline,
+    marginBottom: Spacing.one,
+  },
+  // Boş liste boşluk gibi durmasın: kesikli çerçeve "buraya eklenecek" diyor.
   empty: {
-    paddingVertical: Spacing.four,
+    marginTop: Spacing.four,
+    padding: Spacing.four,
+    borderWidth: Sizes.selectionBorder,
+    borderStyle: 'dashed',
+    borderRadius: Radius.medium,
+  },
+  emptyText: {
+    textAlign: 'center',
   },
   panelHeader: {
     flexDirection: 'row',

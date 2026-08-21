@@ -24,6 +24,7 @@ export const Strings = {
     untitled: 'Başlıksız',
     titlePlaceholder: 'Başlık',
     bodyPlaceholder: 'Not...',
+    count: (count: number) => (count === 1 ? '1 not' : `${count} not`),
     selected: (count: number) => `${count} not seçili`,
     deleteSelectedTitle: 'Seçilenleri sil',
     deleteSelectedBody: (count: number) => `${count} not kalıcı olarak silinecek.`,

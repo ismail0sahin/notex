@@ -93,7 +93,7 @@ export function TaskRow({
   return (
     <>
       {showDivider ? (
-        <View style={[styles.divider, { backgroundColor: theme.backgroundSelected }]} />
+        <View style={[styles.divider, { backgroundColor: theme.textSecondary }]} />
       ) : null}
 
       <Pressable
@@ -103,8 +103,13 @@ export function TaskRow({
           styles.row,
           schedule && styles.scheduleRow,
           {
-            backgroundColor: picked || pressed ? theme.backgroundSelected : theme.backgroundElement,
-            borderColor: picked ? theme.accent : 'transparent',
+            backgroundColor:
+              picked || pressed
+                ? theme.backgroundSelected
+                : done
+                  ? theme.backgroundDone
+                  : theme.backgroundElement,
+            borderColor: picked ? theme.accent : theme.borderSubtle,
           },
         ]}>
         {/* Normal mod dışında işaretleyici devre dışı: dokunuş satıra gitsin,
@@ -128,10 +133,7 @@ export function TaskRow({
             style={[styles.text, { color: theme.text }]}
           />
         ) : (
-          <ThemedText
-            numberOfLines={2}
-            themeColor={done ? 'textSecondary' : 'text'}
-            style={[styles.text, done && styles.doneText]}>
+          <ThemedText numberOfLines={2} style={styles.text}>
             {task.title}
           </ThemedText>
         )}
@@ -176,9 +178,10 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     paddingHorizontal: Spacing.two,
   },
+  // Bölüm ayrımı olduğu belli olsun diye kenardan kenara ve kalın.
   divider: {
     height: Sizes.divider,
-    marginHorizontal: Spacing.three,
+    borderRadius: Sizes.divider / 2,
     marginBottom: Spacing.three,
   },
   text: {
@@ -186,9 +189,6 @@ const styles = StyleSheet.create({
     fontSize: FontSize.body,
     lineHeight: LineHeight.body,
     paddingVertical: Spacing.two,
-  },
-  doneText: {
-    textDecorationLine: 'line-through',
   },
   timeCell: {
     minWidth: Sizes.timeCell,
