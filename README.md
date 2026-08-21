@@ -9,7 +9,18 @@ oturum açma ve senkronizasyon yok; uygulama internet bağlantısı olmadan çal
 
 **Notlar** — başlık ve içerik. Not açıldığında imleç doğrudan metne gelir;
 başlık isteğe bağlı. Boş bırakırsan liste satırında notun ilk satırı başlık
-yerine geçer, kalanı önizleme olur.
+yerine geçer, kalanı önizleme olur. Kaydet düğmesi yok: geri dönmek kaydetmek
+demek, cihazın geri tuşu da aynı işi yapar.
+
+**Gizli notlar** — `⋮` menüsünden açılır, girmek için 3×3 desen çizmek gerekir.
+İlk girişte desen iki kez çizdirilip kaydedilir. Ana listede `⋮` → Seç ile not
+seçip "Gizle" dersen notlar buraya taşınır; gizli listede "Göster" ile geri
+gelirler. Sayfa her kapanışta kilitlenir.
+
+Desen SHA-256 özeti olarak saklanır, düz metin değil. Ama **bu şifreleme
+değildir**: notların kendisi veritabanı dosyasında düz metin durur. Desen
+notları uygulama içinde gözden saklar; cihazın dosyalarına erişen biri yine
+okuyabilir.
 
 **Planlar** — bir plan tek bir görev değil, görev listesidir. `+` basınca hangi
 türde olacağını sorar:
@@ -98,7 +109,9 @@ Bunları görmek için gerçek bir derleme almak gerekir.
 | --- | --- |
 | `src/db/index.ts` | Şema, migration ve bütün SQL sorguları |
 | `src/app/_layout.tsx` | `SQLiteProvider`, tema, açılış ekranının kapatılması |
-| `src/app/index.tsx` | Notlar sekmesi |
+| `src/app/index.tsx` | Notlar sekmesi ve gizli notlar paneli |
+| `src/components/notes-list.tsx` | Not listesi (ana ve gizli liste aynı bileşen) |
+| `src/components/pattern-lock.tsx` | 3×3 desen girişi |
 | `src/app/plans.tsx` | Planlar sekmesi (plan listesi) |
 | `src/components/plan-detail.tsx` | Bir planın içi: başlık ve görev listesi |
 | `src/components/app-tabs.tsx` | Sekmeler; adları dosya adlarıyla eşleşir |

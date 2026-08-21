@@ -87,7 +87,13 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
 
   const planTitle = () => titleRef.current.trim() || Strings.planDetail.untitled;
 
-  function saveTitle() {
+  /**
+   * Başlık yazıldıkça kaydediliyor. Paneli cihazın geri tuşu kapattığında
+   * kapanış plan-detail'in dışından tetikleniyor, o yüzden "çıkarken kaydet"
+   * güvenilir değil. Tek satırlık alan, yazma maliyeti yok.
+   */
+  function saveTitle(text: string) {
+    titleRef.current = text;
     updatePlanTitle(db, planId, planTitle());
   }
 
@@ -215,10 +221,7 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
           {/* Plan başlığı listenin dışında: sürüklenen hücrelerin ölçümüne karışmasın. */}
           <TextInput
             defaultValue={titleRef.current}
-            onChangeText={(text) => {
-              titleRef.current = text;
-            }}
-            onEndEditing={saveTitle}
+            onChangeText={saveTitle}
             placeholder={
               kind === 'schedule'
                 ? Strings.planDetail.schedulePlaceholder

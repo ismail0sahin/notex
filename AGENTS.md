@@ -27,13 +27,32 @@ Arayüz metinleri Türkçe.
 - Tema tercihi native açılış ekranını etkilemez: `app.json`'daki açılış renkleri
   cihaz ayarını izler, SQLite'taki tercihi okuyamaz. Cihaz açık temadayken
   uygulamayı koyuya sabitlerseniz açılışta krem bir kare görünür.
-- `src/app/index.tsx` — Notlar sekmesi. `src/app/plans.tsx` — Planlar sekmesi (plan listesi).
+- `src/app/index.tsx` — Notlar sekmesi. Yalnızca `NotesList`'i ve gizli notlar
+  panelini bağlıyor. `src/app/plans.tsx` — Planlar sekmesi (plan listesi).
+- `src/components/notes-list.tsx` — not listesinin tamamı. `hidden` prop'u hem
+  hangi kümenin okunduğunu (`notes.hidden`) hem seçim modundaki eylemin
+  gizlemek mi göstermek mi olduğunu belirliyor. Ana liste ve gizli liste aynı
+  bileşen; ikinci bir kopya çıkarılmaz.
+- Gizli notlar `PatternGate` ile korunuyor. Desen `settings` tablosunda SHA-256
+  özeti olarak duruyor (`src/lib/pattern.ts`), düz metin değil. **Bu şifreleme
+  değil** — notlar aynı dosyada düz metin. Hash yalnızca desenin kendisini
+  koruyor. Panel her kapanışta kilitleniyor: `unlocked` durumu `index.tsx`'te
+  sıfırlanıyor.
+- `PatternLock` hareketi `PanResponder` ile yazıldı, gesture-handler ile değil:
+  bileşen `Modal` içinde çalışıyor ve PanResponder orada ek kök görünüm istemiyor.
+  Gizli listedeki sürükleme ise gesture-handler kullandığı için panel
+  `GestureHandlerRootView` ile sarılı.
 - `src/components/plan-detail.tsx` — bir planın içi: başlık, tarih, görev checklist'i.
   Görev metni normalde düz yazıdır, dokununca yalnızca o satır `TextInput`'e döner.
   Bu bilinçli: sürekli açık bir `TextInput` olsaydı uzun basış Android'in metin
   seçme menüsüne gider, çoklu seçim hiç tetiklenmezdi. Geri çevirmeyin.
   Plan bir kapsayıcıdır; tamamlanma durumu `tasks` satırlarından hesaplanır, `plans`
-  tablosunda tutulmaz. Detay ekranındaki değişiklikler anında kaydedilir, Kaydet düğmesi yok.
+  tablosunda tutulmaz. Hiçbir yerde Kaydet düğmesi yok: plan içindeki değişiklikler
+  anında yazılıyor, notta ise geri dönmek kaydetmek demek.
+- Panelleri cihazın geri tuşu `SlidePanel`'in `onRequestClose`'undan kapatıyor,
+  yani kapanış paneli açan ekranda tetikleniyor. Bu yüzden "çıkarken kaydet"
+  yalnızca o ekranın elindeki veriler için güvenilir: notta `save()` iki yola da
+  bağlı, plan başlığı ise yazıldıkça kaydediliyor.
 - Ekran geçişleri `Modal` ile yapılıyor, ayrı route açılmıyor — `NativeTabs` altında
   sekme olmayan route'lar sorun çıkarıyor.
 - `src/components/slide-panel.tsx` — not ve plan sayfalarını sağdan kaydırarak açar.

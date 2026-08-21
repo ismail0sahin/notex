@@ -87,7 +87,7 @@ export const FontSize = {
   /** + düğmesindeki artı. */
   fab: 28,
   /** Geri okundaki ← işareti. */
-  back: 30,
+  back: 36,
   /** İşaretleyicinin içindeki tik. */
   check: 14,
 } as const;
@@ -96,7 +96,7 @@ export const LineHeight = {
   small: 20,
   body: 24,
   title: 30,
-  back: 38,
+  back: 44,
   screenTitle: 44,
   fab: 32,
 } as const;
@@ -134,6 +134,8 @@ export const Sizes = {
   progressBar: 4,
   /** Yapılacaklarla bitenleri ayıran çizgi. */
   divider: 2,
+  /** Desen kilidindeki noktaların çapı. */
+  patternDot: 22,
   /** Başlık altındaki ince ayrım çizgisi. */
   hairline: 1,
 } as const;

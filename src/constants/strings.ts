@@ -14,7 +14,6 @@ export const Strings = {
     cancel: 'Vazgeç',
     delete: 'Sil',
     done: 'Bitti',
-    save: 'Kaydet',
     clearTime: 'Temizle',
   },
 
@@ -73,6 +72,28 @@ export const Strings = {
     scheduleDescription: 'Her satırın başlangıç ve bitiş saati olur. Günü saatlere böl.',
     sortedTitle: 'Alışveriş listesi',
     sortedDescription: 'Tiklenen satır alta iner, yapılacaklar üstte kalır.',
+  },
+
+  hidden: {
+    title: 'Gizli notlar',
+    menuDescription: 'Desenle açılır',
+    empty: 'Burada not yok. Ana listeden not seçip "Gizle" ile buraya taşıyabilirsin.',
+    count: (count: number) => (count === 1 ? '1 gizli not' : `${count} gizli not`),
+    hide: 'Gizle',
+    unhide: 'Göster',
+    changePattern: 'Deseni değiştir',
+    changePatternDescription: 'Yeni bir desen çiz',
+  },
+
+  pattern: {
+    create: 'Gizli notlar için bir desen çiz',
+    confirm: 'Deseni bir daha çiz',
+    verify: 'Deseni çiz',
+    tooShort: (min: number) => `En az ${min} nokta birleştir`,
+    mismatch: 'Desenler aynı değil, baştan çiz',
+    wrong: 'Desen yanlış',
+    saved: 'Desen kaydedildi',
+    notEncrypted: 'Desen notları gizler, şifrelemez.',
   },
 
   appearance: {

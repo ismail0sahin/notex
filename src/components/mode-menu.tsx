@@ -29,9 +29,12 @@ function DotsGlyph({ color }: { color: string }) {
 export function ModeMenu({
   onReorder,
   onSelect,
+  extra,
 }: {
   onReorder: () => void;
   onSelect: () => void;
+  /** Ekrana özel madde: notlarda "Gizli notlar", gizli listede "Deseni değiştir". */
+  extra?: { title: string; description: string; onPress: () => void };
 }) {
   const theme = useTheme();
   const { preference } = useThemePreference();
@@ -80,6 +83,19 @@ export function ModeMenu({
                   {Strings.modes.selectDescription}
                 </ThemedText>
               </Pressable>
+
+              {extra ? (
+                <>
+                  <View style={[styles.divider, { backgroundColor: theme.background }]} />
+
+                  <Pressable onPress={() => pick(extra.onPress)} style={item}>
+                    <ThemedText>{extra.title}</ThemedText>
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {extra.description}
+                    </ThemedText>
+                  </Pressable>
+                </>
+              ) : null}
 
               <View style={[styles.divider, { backgroundColor: theme.background }]} />
 

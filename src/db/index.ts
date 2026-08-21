@@ -1,7 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 export const DATABASE_NAME = 'notex.db';
-const DATABASE_VERSION = 5;
+const DATABASE_VERSION = 6;
 
 export type Note = {
   id: number;
@@ -10,6 +10,8 @@ export type Note = {
   created_at: string;
   updated_at: string;
   position: number;
+  /** 1 ise not yalnızca gizli notlar sayfasında görünür. */
+  hidden: number;
 };
 
 /**
@@ -159,6 +161,14 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
     currentDbVersion = 5;
   }
 
+  if (currentDbVersion === 5) {
+    // Gizlenen notlar ana listeden çıkar, desenle açılan sayfada görünür.
+    await db.execAsync(`
+      ALTER TABLE notes ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0;
+    `);
+    currentDbVersion = 6;
+  }
+
   await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
 }
 
@@ -198,20 +208,25 @@ async function writePositions(db: SQLiteDatabase, table: string, ids: readonly n
 
 // --- Notlar ---
 
-export function listNotes(db: SQLiteDatabase) {
-  return db.getAllAsync<Note>('SELECT * FROM notes ORDER BY position ASC, id ASC');
+/** `hidden` her iki listeyi de aynı sorgudan besliyor. */
+export function listNotes(db: SQLiteDatabase, hidden = false) {
+  return db.getAllAsync<Note>(
+    'SELECT * FROM notes WHERE hidden = ? ORDER BY position ASC, id ASC',
+    hidden ? 1 : 0
+  );
 }
 
-/** Yeni not listenin başına gelir. */
-export function createNote(db: SQLiteDatabase, title: string, body: string) {
+/** Yeni not listenin başına gelir; hangi listede açıldıysa orada kalır. */
+export function createNote(db: SQLiteDatabase, title: string, body: string, hidden = false) {
   const ts = now();
   return db.runAsync(
-    `INSERT INTO notes (title, body, created_at, updated_at, position)
-     VALUES (?, ?, ?, ?, (SELECT COALESCE(MIN(position), 0) - 1 FROM notes))`,
+    `INSERT INTO notes (title, body, created_at, updated_at, hidden, position)
+     VALUES (?, ?, ?, ?, ?, (SELECT COALESCE(MIN(position), 0) - 1 FROM notes))`,
     title,
     body,
     ts,
-    ts
+    ts,
+    hidden ? 1 : 0
   );
 }
 
@@ -231,6 +246,18 @@ export function deleteNotes(db: SQLiteDatabase, ids: readonly number[]) {
 
   const placeholders = ids.map(() => '?').join(', ');
   return db.runAsync(`DELETE FROM notes WHERE id IN (${placeholders})`, ...ids);
+}
+
+/** Notları gizler ya da gizliden çıkarır. */
+export function setNotesHidden(db: SQLiteDatabase, ids: readonly number[], hidden: boolean) {
+  if (ids.length === 0) return Promise.resolve(null);
+
+  const placeholders = ids.map(() => '?').join(', ');
+  return db.runAsync(
+    `UPDATE notes SET hidden = ? WHERE id IN (${placeholders})`,
+    hidden ? 1 : 0,
+    ...ids
+  );
 }
 
 export function reorderNotes(db: SQLiteDatabase, ids: readonly number[]) {
