@@ -96,6 +96,10 @@ Arayüz metinleri Türkçe.
   selected}}`'dan. İkisi de temanın `textSecondary` / `accent` / `text`
   tonlarını kullanıyor, dolayısıyla koyu temada kendiliğinden açılıyor.
   PNG'deki ton yalnızca boyama uygulanmazsa görünecek yedek.
+- `expo-system-ui` kodda hiçbir yerde import edilmiyor ama **kaldırılmamalı**:
+  `app.json`'daki `userInterfaceStyle` ayarının native karşılığını o kuruyor.
+  Onsuz cihaz teması doğru okunmuyor ve "Sistem" görünüm seçeneği çalışmıyor.
+  `expo prebuild` bunu uyarı olarak söylüyor.
 - Hedef yalnızca Android: web desteği (`react-native-web`, `react-dom`, `.web.tsx`
   dosyaları, `app.json`'daki `web` bloğu, favicon) kaldırıldı. Web geri istenirse
   bunların hepsi yeniden eklenmeli.
@@ -189,6 +193,23 @@ veritabanı hazır olduğu an, yoksa arada boş bir kare görünüyor.
 
 Template'in Expo markalı animasyonlu açılış katmanı ve kullanılmayan bileşenleri kaldırıldı;
 `expo-image`, `expo-symbols`, `expo-web-browser` bağımlılıkları da onlarla birlikte gitti.
+
+## APK derlemesi
+
+Gradle, asistan oturumunun kabuğundan **çalışmaz**: kendi süreçleri arasında
+loopback soketi açıyor ve orada `Unable to establish loopback connection` ile
+düşüyor. Beş satırlık bir Java programı (`Selector.open()`) aynı hatayı verdiği
+için sorun projede değil. `gradlew -v` başarılı olur ama gerçek görevler düşer.
+Derleme komutunu kullanıcı kendi terminalinde çalıştırır; asistan hazırlığı
+yapar ve çıktıyı doğrular. Ayrıntılar README'de.
+
+İki tuzak kayda değer:
+
+- `android/local.properties` prebuild tarafından her zaman üretilmiyor. Yazarken
+  **eğik bölü** kullanılmalı; ters bölü Java properties'te kaçış karakteri,
+  `C:\Users` → `C:Users` olur ve derleme `Invalid file path` ile düşer.
+- `android/` klasörü varken `expo start` geliştirme derlemesi moduna geçiyor.
+  npm script'lerine `--go` gömülü, bu yüzden `npm start` Expo Go açmaya devam eder.
 
 ## Kontroller
 

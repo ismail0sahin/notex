@@ -91,17 +91,75 @@ bloklarsa `npx expo start --tunnel`.
 
 ## Derleme
 
-Profiller `eas.json` içinde. Kurulabilir APK için:
+Uygulama ikonu ve açılış ekranı **native yapılandırmadır**; Expo Go'da görünmez.
+Bunları görmek için gerçek bir derleme almak gerekir.
+
+### Yerel APK (kullanılan yol)
+
+⚠️ **Derleme komutunu Claude oturumu içinden çalıştırmak mümkün değil.** Gradle,
+kendi süreçleri arasında loopback soketi açıyor; asistanın kabuğunda bu
+`java.io.IOException: Unable to establish loopback connection` ile düşüyor.
+Denenen ve hepsi aynı hatayı veren yollar: düz `gradlew`, `--no-daemon`,
+`GRADLE_OPTS`, kum havuzu kapalı, `gradlew.bat` + PowerShell, `preferIPv4Stack`,
+eski selector sağlayıcıları. `gradlew -v` çalışır (daemon açmaz) — buna aldanma.
+**Komutu kullanıcı kendi terminalinde çalıştırır.**
+
+Tek seferlik: native klasörü üret.
+
+```bash
+npx expo prebuild -p android
+```
+
+`android/local.properties` her zaman prebuild tarafından üretilmiyor; yoksa elle
+yazılır. **Eğik bölü kullan** — Java properties dosyasında ters bölü kaçış
+karakteridir, `C:\Users` yazarsan yol `C:Users` olarak okunur ve derleme
+`Invalid file path` ile düşer:
+
+```
+sdk.dir=C:/Users/<kullanici>/AppData/Local/Android/Sdk
+```
+
+Sonra kendi terminalinde (PowerShell):
+
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
+cd android
+.\gradlew assembleRelease
+```
+
+Çıktı: `android/app/build/outputs/apk/release/app-release.apk` (~79 MB).
+Telefona kopyalayıp kurmak yeterli. Lint araya girip keserse komutun sonuna
+`-x lintVitalAnalyzeRelease` eklenir.
+
+JS kodu değişince prebuild gerekmez, `assembleRelease` yeter — paket her
+derlemede yeniden üretiliyor. Prebuild yalnızca native taraf (`app.json`,
+eklentiler, ikonlar) değişince gerekir.
+
+APK dört mimariyi birlikte taşıyor (`gradle.properties` → `reactNativeArchitectures`).
+Boyutu düşürmek istersen tek mimariyle derlenir — modern telefonların hepsi arm64:
+
+```powershell
+.\gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a
+```
+
+Release derlemesi React Native şablonunun **debug anahtarıyla** imzalanıyor. Kendi
+telefonuna kurmak için sorun değil ve aynı `versionCode` ile üzerine kurulum
+yapıldığında uygulama verisi (notlar, gizli desen) korunuyor. Play Store'a
+yüklemek için kendi keystore'unu üretip `signingConfigs.release` tanımlamak gerekir.
+
+`android/` klasörü `.gitignore`'da. Klasör varken `expo start` seni geliştirme
+derlemesi moduna çeker ve `a` tuşu "No development build" hatası verir; bu yüzden
+npm script'lerinde `--go` bayrağı gömülü — `npm start` her koşulda Expo Go açar.
+
+### EAS bulut derlemesi (alternatif)
+
+Profiller `eas.json` içinde. Yerel toolchain istemiyorsan:
 
 ```bash
 npx eas-cli build --profile preview -p android
 ```
 
-Ücretsiz bir Expo hesabı gerekiyor. Yerel Android SDK gerekmez, derleme bulutta
-çalışır.
-
-Uygulama ikonu ve açılış ekranı **native yapılandırmadır**; Expo Go'da görünmez.
-Bunları görmek için gerçek bir derleme almak gerekir.
+Ücretsiz Expo hesabı gerekiyor ve kaynak kod Expo sunucularına yükleniyor.
 
 ## Proje yapısı
 
