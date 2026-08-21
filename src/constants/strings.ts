@@ -75,6 +75,16 @@ export const Strings = {
     sortedDescription: 'Tiklenen satır alta iner, yapılacaklar üstte kalır.',
   },
 
+  appearance: {
+    title: 'Görünüm',
+    system: 'Sistem',
+    systemDescription: 'Cihazın ayarını izler',
+    light: 'Açık',
+    lightDescription: 'Her zaman açık tema',
+    dark: 'Koyu',
+    darkDescription: 'Her zaman koyu tema',
+  },
+
   modes: {
     reorder: 'Sırala',
     reorderDescription: 'Basılı tutup taşı',

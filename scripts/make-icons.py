@@ -14,10 +14,9 @@ TERRACOTTA = (0xB9, 0x5F, 0x3B)
 CREAM = (0xFB, 0xF8, 0xF3)
 WHITE = (0xFF, 0xFF, 0xFF)
 
-# Sekme cubugu renkleri. Ikon rengi PNG'ye gomulu (NativeTabs boyama yapmiyor),
-# o yuzden hem krem hem koyu kahve cubukta okunan tonlar secildi.
-TAB_OFF = (0x8A, 0x7D, 0x70)
-TAB_ON = TERRACOTTA
+# Sekme ikonlari NativeTabs'in iconColor prop'uyla boyaniyor; buradaki ton
+# yalnizca boyama uygulanmazsa gorunecek guvenli varsayilan.
+TAB_TINT = (0x8A, 0x7D, 0x70)
 
 # Marka, 1000x1000 birim kutuda: (ax, ay, bx, by, yaricap)
 MARK = [
@@ -151,12 +150,10 @@ write_png(A + 'android-icon-background.png', 1024, [
 write_png(A + 'android-icon-foreground.png', 1024, render(1024, 0.44, CREAM))
 write_png(A + 'android-icon-monochrome.png', 1024, render(1024, 0.44, WHITE))
 
-# Sekme ikonlari. NativeTabs iki durum aliyor (src={{default, selected}}),
-# o yuzden her ikon secili ve secili olmayan hâliyle ayri dosya.
+# Sekme ikonlari: her ikon tek dosya, uc yogunlukta.
 for name, mark in (('notes', NOTES_MARK), ('plans', PLANS_MARK)):
     for suffix, px in (('', 24), ('@2x', 48), ('@3x', 72)):
-        write_png(f'{A}tabIcons/{name}{suffix}.png', px, render(px, 0.86, TAB_OFF, mark=mark))
-        write_png(f'{A}tabIcons/{name}-on{suffix}.png', px, render(px, 0.86, TAB_ON, mark=mark))
+        write_png(f'{A}tabIcons/{name}{suffix}.png', px, render(px, 0.86, TAB_TINT, mark=mark))
 
 # Acilis ekrani: krem zemin uzerine terracotta marka (zemin app.json'da).
 write_png(A + 'splash-icon.png', 512, render(512, 0.82, TERRACOTTA))

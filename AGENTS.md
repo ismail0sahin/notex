@@ -15,6 +15,18 @@ Arayüz metinleri Türkçe.
   `if (currentDbVersion === n)` bloğu eklenir. Var olan blok düzenlenmez,
   yoksa kurulu uygulamalardaki veri bozulur.
 - `src/app/_layout.tsx` — `SQLiteProvider` burada; ekranlar `useSQLiteContext()` kullanır.
+  Onun içinde `AppThemeProvider` (`src/hooks/use-theme.tsx`) var: tema tercihini
+  `settings` tablosundan okuyup uygulamaya dağıtıyor. Sıra önemli — sağlayıcı
+  tercihi veritabanından okuduğu için `SQLiteProvider`'ın içinde olmak zorunda.
+  Bileşenler renk için `useTheme()`, tercihi okumak/değiştirmek için
+  `useThemePreference()` kullanır; `useColorScheme()` doğrudan çağrılmaz, yoksa
+  kullanıcının seçimi atlanır.
+- `src/components/option-sheet.tsx` — ortada açılan seçim sayfası. Plan türü ve
+  görünüm tercihi ikisi de bunu kullanıyor; yeni bir seçim gerekirse üçüncü bir
+  sayfa yazmak yerine buna bir çağrı eklenir.
+- Tema tercihi native açılış ekranını etkilemez: `app.json`'daki açılış renkleri
+  cihaz ayarını izler, SQLite'taki tercihi okuyamaz. Cihaz açık temadayken
+  uygulamayı koyuya sabitlerseniz açılışta krem bir kare görünür.
 - `src/app/index.tsx` — Notlar sekmesi. `src/app/plans.tsx` — Planlar sekmesi (plan listesi).
 - `src/components/plan-detail.tsx` — bir planın içi: başlık, tarih, görev checklist'i.
   Görev metni normalde düz yazıdır, dokununca yalnızca o satır `TextInput`'e döner.
@@ -60,10 +72,11 @@ Arayüz metinleri Türkçe.
 - Bütün kartların duran hâlinde `Colors.borderSubtle` çerçevesi var; seçilince
   `accent`'e dönüyor. Çerçeve her zaman duruyor (eskiden şeffaftı), yoksa seçim
   anında satır yükseklikleri oynuyor.
-- Sekme ikonları `NativeTabs` tarafından boyanmıyor — renk PNG'nin içinde. Bu
-  yüzden her ikon iki dosya: `notes.png` (seçili değil, ılık gri) ve
-  `notes-on.png` (seçili, aksan). Tek siyah maske kullanılırsa koyu temada
-  kayboluyor; template'ten gelen `renderingMode="template"` SDK 54'te yok.
+- Sekme ikonları tek renkli maske; renk `NativeTabs`'in `iconColor={{default,
+  selected}}` prop'undan geliyor, etiket rengi de `labelStyle={{default,
+  selected}}`'dan. İkisi de temanın `textSecondary` / `accent` / `text`
+  tonlarını kullanıyor, dolayısıyla koyu temada kendiliğinden açılıyor.
+  PNG'deki ton yalnızca boyama uygulanmazsa görünecek yedek.
 - Hedef yalnızca Android: web desteği (`react-native-web`, `react-dom`, `.web.tsx`
   dosyaları, `app.json`'daki `web` bloğu, favicon) kaldırıldı. Web geri istenirse
   bunların hepsi yeniden eklenmeli.

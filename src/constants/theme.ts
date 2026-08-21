@@ -47,6 +47,13 @@ export const Colors = {
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
+/** Tek bir temanın renk kümesi. Colors `as const` olduğu için iki temanın
+ *  birebir tipleri farklı; ortak arayüz bu. */
+export type ThemeColors = Record<ThemeColor, string>;
+
+/** Kullanıcının tema tercihi. `system` cihaz ayarını izler. */
+export type ThemePreference = 'system' | 'light' | 'dark';
+
 export const Fonts = Platform.select({
   ios: {
     sans: 'system-ui',
@@ -80,7 +87,7 @@ export const FontSize = {
   /** + düğmesindeki artı. */
   fab: 28,
   /** Geri okundaki ← işareti. */
-  back: 24,
+  back: 30,
   /** İşaretleyicinin içindeki tik. */
   check: 14,
 } as const;
@@ -89,6 +96,7 @@ export const LineHeight = {
   small: 20,
   body: 24,
   title: 30,
+  back: 38,
   screenTitle: 44,
   fab: 32,
 } as const;

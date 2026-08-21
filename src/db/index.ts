@@ -1,7 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 export const DATABASE_NAME = 'notex.db';
-const DATABASE_VERSION = 4;
+const DATABASE_VERSION = 5;
 
 export type Note = {
   id: number;
@@ -147,10 +147,42 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
     currentDbVersion = 4;
   }
 
+  if (currentDbVersion === 4) {
+    // Tercihler için anahtar/değer tablosu. Ayrı bir depolama paketi eklemek
+    // yerine veriyle aynı dosyada duruyor.
+    await db.execAsync(`
+      CREATE TABLE settings (
+        key TEXT PRIMARY KEY NOT NULL,
+        value TEXT NOT NULL
+      );
+    `);
+    currentDbVersion = 5;
+  }
+
   await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
 }
 
 const now = () => new Date().toISOString();
+
+// --- Tercihler ---
+
+export async function getSetting(db: SQLiteDatabase, key: string) {
+  const row = await db.getFirstAsync<{ value: string }>(
+    'SELECT value FROM settings WHERE key = ?',
+    key
+  );
+
+  return row?.value ?? null;
+}
+
+export function setSetting(db: SQLiteDatabase, key: string, value: string) {
+  return db.runAsync(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    key,
+    value
+  );
+}
 
 /**
  * Sürükleyip bırakma sonrası sırayı yazar. Tablo adı yalnızca bu dosyadan

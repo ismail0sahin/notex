@@ -33,6 +33,10 @@ aksan renginin zemine karışmış hâli. Planın tamamlanma oranı görevlerind
 `3/5 görev tamam` ve ince bir ilerleme çubuğu görünür. Çizelgelerde liste
 satırında günün kapsamı da yazar (`09:00 – 17:30`).
 
+**Görünüm** — `⋮` menüsündeki üçüncü madde: Sistem, Açık, Koyu. Seçim anında
+uygulanır ve cihazda saklanır (`settings` tablosu), uygulamayı kapatıp açınca
+korunur. Varsayılan "Sistem", yani cihazın ayarını izler.
+
 **Modlar** — her listenin sağ üstünde bir `⋮` düğmesi var: "Sırala" ve "Seç".
 
 *Sıralama modunda* satırı basılı tutup yukarı aşağı taşıyorsun; sıra cihazda
@@ -109,7 +113,8 @@ sekme olmayan route'lar sorun çıkarıyor.
 
 ## Veri modeli
 
-Üç tablo: `notes`, `plans`, `tasks`. Görevler planına `ON DELETE CASCADE` ile
+Dört tablo: `notes`, `plans`, `tasks` ve tercihler için `settings`
+(anahtar/değer). Görevler planına `ON DELETE CASCADE` ile
 bağlı, yani plan silinince görevleri de gider.
 
 Şema `PRAGMA user_version` ile versiyonlu. Değişiklik gerektiğinde
@@ -147,9 +152,8 @@ olarak tanımlı: `MARK` uygulama markası (iki not satırı + onay işareti),
 `assets/images/` altındaki bütün görselleri yeniler — uygulama ikonu, Android
 uyarlanabilir ikonun üç katmanı, açılış görseli ve sekme ikonları.
 
-Sekme ikonları iki durumlu (`notes.png` / `notes-on.png`): `NativeTabs` ikonu
-boyamıyor, renk PNG'nin içinde. Tek bir siyah maske kullanılsa koyu temada
-kaybolurdu.
+Sekme ikonları tek renkli maske olarak üretiliyor; rengini `NativeTabs`'in
+`iconColor` prop'u veriyor, yani tema değişince ikon da değişiyor.
 
 ## Kontroller
 

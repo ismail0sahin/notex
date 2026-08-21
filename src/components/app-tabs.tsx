@@ -1,40 +1,32 @@
 import { Icon, Label, NativeTabs } from 'expo-router/unstable-native-tabs';
-import { useColorScheme } from 'react-native';
 
 import { Strings } from '@/constants/strings';
-import { Colors } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
 /**
- * Sekme ikonları iki durumlu: NativeTabs boyama yapmıyor, renk PNG'nin içinde.
- * Bu yüzden seçili ve seçili olmayan hâller ayrı dosya (scripts/make-icons.py).
+ * Sekme ikonları tek renkli maske; rengi `iconColor` veriyor. Böylece ikon da
+ * etiket de temanın kendi tonlarını kullanıyor — koyu temada ikisi de açılıyor.
  */
 export default function AppTabs() {
-  const scheme = useColorScheme();
-  const colors = Colors[scheme ?? 'light'];
+  const colors = useTheme();
 
   return (
     <NativeTabs
       backgroundColor={colors.background}
       indicatorColor={colors.backgroundSelected}
-      labelStyle={{ selected: { color: colors.text } }}>
+      iconColor={{ default: colors.textSecondary, selected: colors.accent }}
+      labelStyle={{
+        default: { color: colors.textSecondary },
+        selected: { color: colors.text },
+      }}>
       <NativeTabs.Trigger name="index">
         <Label>{Strings.tabs.notes}</Label>
-        <Icon
-          src={{
-            default: require('@/assets/images/tabIcons/notes.png'),
-            selected: require('@/assets/images/tabIcons/notes-on.png'),
-          }}
-        />
+        <Icon src={require('@/assets/images/tabIcons/notes.png')} />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="plans">
         <Label>{Strings.tabs.plans}</Label>
-        <Icon
-          src={{
-            default: require('@/assets/images/tabIcons/plans.png'),
-            selected: require('@/assets/images/tabIcons/plans-on.png'),
-          }}
-        />
+        <Icon src={require('@/assets/images/tabIcons/plans.png')} />
       </NativeTabs.Trigger>
     </NativeTabs>
   );

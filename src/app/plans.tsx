@@ -11,7 +11,7 @@ import { Fab } from '@/components/fab';
 import { ModeMenu } from '@/components/mode-menu';
 import { PlanDetail } from '@/components/plan-detail';
 import { PlanRow } from '@/components/plan-row';
-import { PlanTypeSheet } from '@/components/plan-type-sheet';
+import { OptionSheet, type SheetOption } from '@/components/option-sheet';
 import { SlidePanel } from '@/components/slide-panel';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -30,6 +30,25 @@ import {
 } from '@/db';
 import { useListMode } from '@/hooks/use-list-mode';
 import { useTheme } from '@/hooks/use-theme';
+
+/** + basıldığında sorulan plan türleri. */
+const KIND_OPTIONS: readonly SheetOption<PlanKind>[] = [
+  {
+    value: 'checklist',
+    title: Strings.planTypes.checklistTitle,
+    description: Strings.planTypes.checklistDescription,
+  },
+  {
+    value: 'sorted',
+    title: Strings.planTypes.sortedTitle,
+    description: Strings.planTypes.sortedDescription,
+  },
+  {
+    value: 'schedule',
+    title: Strings.planTypes.scheduleTitle,
+    description: Strings.planTypes.scheduleDescription,
+  },
+];
 
 export default function PlansScreen() {
   const db = useSQLiteContext();
@@ -154,8 +173,10 @@ export default function PlansScreen() {
         {list.mode === 'normal' ? <Fab onPress={() => setAskingKind(true)} /> : null}
       </SafeAreaView>
 
-      <PlanTypeSheet
+      <OptionSheet
         visible={askingKind}
+        title={Strings.planTypes.question}
+        options={KIND_OPTIONS}
         onCancel={() => setAskingKind(false)}
         onPick={addPlan}
       />

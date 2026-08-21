@@ -22,6 +22,6 @@ export function BackButton({ onPress }: { onPress: () => void }) {
 const styles = StyleSheet.create({
   arrow: {
     fontSize: FontSize.back,
-    lineHeight: LineHeight.title,
+    lineHeight: LineHeight.back,
   },
 });
