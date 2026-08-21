@@ -39,7 +39,12 @@ export function PlanRow({
     plan.task_count === 0
       ? Strings.plans.noTasks
       : Strings.plans.taskProgress(plan.done_count, plan.task_count);
-  const secondary = plan.kind === 'schedule' ? `${span} · ${counts}` : counts;
+  const secondary =
+    plan.kind === 'schedule'
+      ? `${span} · ${counts}`
+      : plan.kind === 'sorted'
+        ? `${Strings.plans.sortedLabel} · ${counts}`
+        : counts;
 
   const handlePress = () => {
     if (mode === 'select') onToggle();

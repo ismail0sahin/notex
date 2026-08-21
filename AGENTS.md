@@ -88,7 +88,17 @@ kaldırıldı (kurulu olması `npm start`'ı Expo Go yerine geliştirme derlemes
 
 ## Plan türleri
 
-`plans.kind` iki değer alır: `checklist` ve `schedule`. Çizelgede her satırın
+`plans.kind` üç değer alır: `checklist`, `sorted` ve `schedule`.
+
+`sorted` planlarda tamamlanan satırlar alta iner (`listTasks`'in `sinkDone`
+parametresi, sıralama SQL'de) ve iki grubun arasına ince bir çizgi çiziliyor.
+Çizgi sıralama modunda gizleniyor: sürüklenen hücrenin içinde kalıp satırla
+birlikte oynuyordu. Her grubun içinde elle verilen `position` sırası
+korunuyor, yani sürükleme yapılacaklar grubunun içinde hâlâ anlamlı.
+
+Not: `notes.title` boş kalabilir. Liste satırındaki başlık `src/lib/note.ts`
+içinde notun ilk satırından türetiliyor; türetilmiş metin veritabanına
+yazılmıyor, yoksa not düzenlendiğinde eskiyen bir kopya kalırdı. Çizelgede her satırın
 `start_time` / `end_time` alanı olabilir (`'HH:MM'` metni ya da null); görev
 listesinde bu alanlar boş kalır. Tek tablo, nullable kolonlar — iki ayrı görev
 tablosu tutmanın karşılığı yok.
@@ -109,9 +119,11 @@ tercih; değiştirilecekse sürüklemenin o tür için ne anlama geldiği yenide
 tarihe göre dizmek) kaldırıldı — elle taşınan bir sırayla bir arada çalışmıyor,
 kullanıcı bir satırı taşıdıktan sonra geri zıplıyordu.
 
-Yeni kayıt eklerken `position` sorgunun içinde hesaplanıyor: not ve plan için
-`MIN(position) - 1` (başa), görev için `MAX(position) + 1` (sona). Böylece ekleme
-sırasında bütün satırların yeniden numaralanması gerekmiyor.
+Yeni kayıt eklerken `position` sorgunun içinde hesaplanıyor: not, plan ve görev
+için `MIN(position) - 1` (başa). Böylece ekleme sırasında bütün satırların
+yeniden numaralanması gerekmiyor. Görevlerde başa eklemenin sebebi arayüz: yazma
+satırı plan içinde en üstte sabit duruyor, yazılan satırın onun hemen altında
+görünmesi gerekiyor.
 
 Sürükleme bittiğinde `writePositions` sırayı 0..n-1 olarak tek işlemde yazıyor.
 

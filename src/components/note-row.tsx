@@ -8,6 +8,7 @@ import type { Note } from '@/db';
 import type { ListMode } from '@/hooks/use-list-mode';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDate } from '@/lib/date';
+import { notePreview } from '@/lib/note';
 
 /**
  * Uzun basış moda göre iş değiştirir: normalde çoklu seçimi açar, sıralama
@@ -31,6 +32,7 @@ export function NoteRow({
 }) {
   const theme = useTheme();
   const drag = useReorderableDrag();
+  const { title, preview } = notePreview(note);
 
   const handlePress = () => {
     if (mode === 'select') onToggle();
@@ -55,10 +57,10 @@ export function NoteRow({
         },
       ]}>
       <View style={styles.body}>
-        <ThemedText numberOfLines={1}>{note.title}</ThemedText>
-        {note.body ? (
+        <ThemedText numberOfLines={1}>{title}</ThemedText>
+        {preview ? (
           <ThemedText type="small" themeColor="textSecondary" numberOfLines={2}>
-            {note.body}
+            {preview}
           </ThemedText>
         ) : null}
         <ThemedText type="small" themeColor="textSecondary">

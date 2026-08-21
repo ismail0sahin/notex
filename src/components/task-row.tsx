@@ -54,6 +54,7 @@ export function TaskRow({
   onToggle,
   onStartSelect,
   onPickTime,
+  showDivider = false,
 }: {
   task: Task;
   kind: PlanKind;
@@ -66,6 +67,8 @@ export function TaskRow({
   onToggle: () => void;
   onStartSelect: () => void;
   onPickTime: (field: 'start' | 'end') => void;
+  /** Bu satırın üstüne yapılacaklarla bitenleri ayıran çizgi çizilir. */
+  showDivider?: boolean;
 }) {
   const theme = useTheme();
   const drag = useReorderableDrag();
@@ -88,65 +91,71 @@ export function TaskRow({
   };
 
   return (
-    <Pressable
-      onPress={handlePress}
-      onLongPress={handleLongPress}
-      style={({ pressed }) => [
-        styles.row,
-        schedule && styles.scheduleRow,
-        {
-          backgroundColor: picked || pressed ? theme.backgroundSelected : theme.backgroundElement,
-          borderColor: picked ? theme.accent : 'transparent',
-        },
-      ]}>
-      {/* Normal mod dışında işaretleyici devre dışı: dokunuş satıra gitsin,
-          yoksa aynı hareket hem seçer hem görevi tamamlar. */}
-      <View pointerEvents={normal ? 'auto' : 'none'}>
-        <Checkbox checked={done} onPress={onToggleDone} />
-      </View>
-
-      {editing ? (
-        <TextInput
-          autoFocus
-          defaultValue={task.title}
-          onChangeText={(text) => {
-            draftRef.current = text;
-          }}
-          onBlur={() => onSave(draftRef.current)}
-          onSubmitEditing={() => onSave(draftRef.current)}
-          returnKeyType="done"
-          placeholder={Strings.planDetail.taskPlaceholder}
-          placeholderTextColor={theme.textSecondary}
-          style={[styles.text, { color: theme.text }]}
-        />
-      ) : (
-        <ThemedText
-          numberOfLines={2}
-          themeColor={done ? 'textSecondary' : 'text'}
-          style={[styles.text, done && styles.doneText]}>
-          {task.title}
-        </ThemedText>
-      )}
-
-      {schedule ? (
-        <>
-          <TimeCell
-            value={task.start_time}
-            disabled={!normal}
-            onPress={() => onPickTime('start')}
-            label={Strings.a11y.startTime}
-          />
-          <TimeCell
-            value={task.end_time}
-            disabled={!normal}
-            onPress={() => onPickTime('end')}
-            label={Strings.a11y.endTime}
-          />
-        </>
+    <>
+      {showDivider ? (
+        <View style={[styles.divider, { backgroundColor: theme.backgroundSelected }]} />
       ) : null}
 
-      {mode === 'reorder' ? <DragHandle /> : null}
-    </Pressable>
+      <Pressable
+        onPress={handlePress}
+        onLongPress={handleLongPress}
+        style={({ pressed }) => [
+          styles.row,
+          schedule && styles.scheduleRow,
+          {
+            backgroundColor: picked || pressed ? theme.backgroundSelected : theme.backgroundElement,
+            borderColor: picked ? theme.accent : 'transparent',
+          },
+        ]}>
+        {/* Normal mod dışında işaretleyici devre dışı: dokunuş satıra gitsin,
+            yoksa aynı hareket hem seçer hem görevi tamamlar. */}
+        <View pointerEvents={normal ? 'auto' : 'none'}>
+          <Checkbox checked={done} onPress={onToggleDone} />
+        </View>
+
+        {editing ? (
+          <TextInput
+            autoFocus
+            defaultValue={task.title}
+            onChangeText={(text) => {
+              draftRef.current = text;
+            }}
+            onBlur={() => onSave(draftRef.current)}
+            onSubmitEditing={() => onSave(draftRef.current)}
+            returnKeyType="done"
+            placeholder={Strings.planDetail.taskPlaceholder}
+            placeholderTextColor={theme.textSecondary}
+            style={[styles.text, { color: theme.text }]}
+          />
+        ) : (
+          <ThemedText
+            numberOfLines={2}
+            themeColor={done ? 'textSecondary' : 'text'}
+            style={[styles.text, done && styles.doneText]}>
+            {task.title}
+          </ThemedText>
+        )}
+
+        {schedule ? (
+          <>
+            <TimeCell
+              value={task.start_time}
+              disabled={!normal}
+              onPress={() => onPickTime('start')}
+              label={Strings.a11y.startTime}
+            />
+            <TimeCell
+              value={task.end_time}
+              disabled={!normal}
+              onPress={() => onPickTime('end')}
+              label={Strings.a11y.endTime}
+            />
+          </>
+        ) : null}
+
+        {mode === 'reorder' ? <DragHandle /> : null}
+      </Pressable>
+    </>
   );
 }
 
@@ -166,6 +175,11 @@ const styles = StyleSheet.create({
   scheduleRow: {
     gap: Spacing.two,
     paddingHorizontal: Spacing.two,
+  },
+  divider: {
+    height: Sizes.divider,
+    marginHorizontal: Spacing.three,
+    marginBottom: Spacing.three,
   },
   text: {
     flex: 1,

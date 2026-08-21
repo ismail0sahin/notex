@@ -118,6 +118,8 @@ export const Sizes = {
   selectionBorder: 2,
   /** İlerleme çubuğu. */
   progressBar: 4,
+  /** Yapılacaklarla bitenleri ayıran çizgi. */
+  divider: 1,
 } as const;
 
 /**

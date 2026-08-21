@@ -71,10 +71,11 @@ export default function NotesScreen() {
       return;
     }
 
+    // Başlık boş bırakılabilir; liste satırında notun ilk satırı başlık yerine geçer.
     if (editing === 'new') {
-      await createNote(db, nextTitle || Strings.notes.untitled, nextBody);
+      await createNote(db, nextTitle, nextBody);
     } else if (editing) {
-      await updateNote(db, editing.id, nextTitle || Strings.notes.untitled, nextBody);
+      await updateNote(db, editing.id, nextTitle, nextBody);
     }
 
     setEditing(null);
@@ -175,7 +176,6 @@ export default function NotesScreen() {
                 placeholder={Strings.notes.titlePlaceholder}
                 placeholderTextColor={theme.textSecondary}
                 style={[styles.titleInput, { color: theme.text }]}
-                autoFocus
               />
 
               <TextInput
@@ -188,6 +188,7 @@ export default function NotesScreen() {
                 multiline
                 textAlignVertical="top"
                 style={[styles.bodyInput, { color: theme.text }]}
+                autoFocus
               />
             </SafeAreaView>
           </ThemedView>

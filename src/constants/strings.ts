@@ -40,6 +40,7 @@ export const Strings = {
     deleteSelectedBody: (count: number) =>
       `${count} plan ve içindeki bütün görevler kalıcı olarak silinecek.`,
     scheduleLabel: 'Çizelge',
+    sortedLabel: 'Bitenler altta',
     noTasks: 'Görev yok',
     taskProgress: (done: number, total: number) => `${done}/${total} görev tamam`,
     timeSpan: (start: string, end: string) => `${start} – ${end}`,
@@ -69,6 +70,8 @@ export const Strings = {
     checklistDescription: 'Alt alta görevler, tik atarak tamamla. Saat yok.',
     scheduleTitle: 'Çizelge',
     scheduleDescription: 'Her satırın başlangıç ve bitiş saati olur. Günü saatlere böl.',
+    sortedTitle: 'Alışveriş listesi',
+    sortedDescription: 'Tiklenen satır alta iner, yapılacaklar üstte kalır.',
   },
 
   modes: {

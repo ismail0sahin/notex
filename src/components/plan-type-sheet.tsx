@@ -13,6 +13,11 @@ const OPTIONS: { kind: PlanKind; title: string; description: string }[] = [
     description: Strings.planTypes.checklistDescription,
   },
   {
+    kind: 'sorted',
+    title: Strings.planTypes.sortedTitle,
+    description: Strings.planTypes.sortedDescription,
+  },
+  {
     kind: 'schedule',
     title: Strings.planTypes.scheduleTitle,
     description: Strings.planTypes.scheduleDescription,

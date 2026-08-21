@@ -7,18 +7,24 @@ oturum açma ve senkronizasyon yok; uygulama internet bağlantısı olmadan çal
 
 ## Ne yapar
 
-**Notlar** — başlık ve içerik. Son düzenlenen en üstte. Satıra dokunup düzenle.
+**Notlar** — başlık ve içerik. Not açıldığında imleç doğrudan metne gelir;
+başlık isteğe bağlı. Boş bırakırsan liste satırında notun ilk satırı başlık
+yerine geçer, kalanı önizleme olur.
 
 **Planlar** — bir plan tek bir görev değil, görev listesidir. `+` basınca hangi
 türde olacağını sorar:
 
 - **Görev listesi** — alt alta görevler, tik atarak tamamla.
+- **Alışveriş listesi** — tiklenen satır listenin altına iner, yapılacaklar
+  üstte toplanır; aralarında ince bir çizgi durur.
 - **Çizelge** — her satırda tik, görev adı, başlangıç ve bitiş saati. Saate
-  dokunmak Android'in saat seçicisini açar; "Temizle" ile saati boşaltabilirsin.
+  dokunmak Android'in saat seçicisini açar (alarm tarzı dönen tekerlek);
+  "Temizle" ile saati boşaltabilirsin.
 
 Not ve plan sayfaları sağdan kayarak açılır, sol üstteki `←` ile kapanır.
 
-Plana girip alt alta satır eklersin. Görev metnine dokunmak o satırı düzenlemeye
+Yazma satırı plan içinde en üstte sabit durur; yazdığın satır onun hemen altına
+eklenir, liste kaydırılsa da yazma satırı kaybolmaz. Görev metnine dokunmak o satırı düzenlemeye
 açar; boşaltıp çıkarsan satır silinir. Satırları silmek ve sıralamak için plan
 içindeki `⋮` menüsü kullanılır — listelerdeki mantığın aynısı. Çizelgelerde liste satırında günün
 kapsamı da görünür (`09:00 – 17:30`). Planın tamamlanma oranı görevlerinden

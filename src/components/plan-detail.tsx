@@ -66,10 +66,13 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
   const newTaskRef = useRef('');
   const newTaskInput = useRef<TextInput>(null);
 
+  // Sıralama türe bağlı: `sorted` planlarda tamamlananlar alta iner.
   const reloadTasks = useCallback(async () => {
-    setTasks(await listTasks(db, planId));
-  }, [db, planId]);
+    setTasks(await listTasks(db, planId, kind === 'sorted'));
+  }, [db, planId, kind]);
 
+  // Tür ilk okumada öğrenildiği için etki iki kez çalışıyor: bir kez varsayılan
+  // sırayla, bir kez planın gerçek türüyle. Sorgu yerel, maliyeti yok.
   useEffect(() => {
     (async () => {
       const plan = await getPlan(db, planId);
@@ -168,6 +171,11 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
 
   const doneCount = tasks.filter((task) => task.done === 1).length;
 
+  // Alışveriş listesinde yapılacaklarla bitenler arasına çizgi. Sıralama modunda
+  // gizli: çizgi sürüklenen hücreye takılıp satırla birlikte oynardı.
+  const dividerIndex =
+    kind === 'sorted' && list.mode !== 'reorder' ? tasks.findIndex((task) => task.done === 1) : -1;
+
   function statusLine() {
     if (list.selecting) return Strings.planDetail.selected(list.count);
     if (list.reordering) return Strings.modes.reorderHintShort;
@@ -221,6 +229,30 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
             multiline
           />
 
+          {/* Yazma satırı listenin dışında ve üstünde: liste kaydırılsa da yerinde
+              kalıyor, yazılan satır da hemen altında görünüyor. */}
+          {list.mode === 'normal' ? (
+            <View style={[styles.addRow, { backgroundColor: theme.backgroundElement }]}>
+              <ThemedText themeColor="textSecondary">{Glyphs.add}</ThemedText>
+              <TextInput
+                ref={newTaskInput}
+                onChangeText={(text) => {
+                  newTaskRef.current = text;
+                }}
+                onSubmitEditing={addTask}
+                submitBehavior="submit"
+                returnKeyType="done"
+                placeholder={
+                  kind === 'schedule'
+                    ? Strings.planDetail.addScheduleRow
+                    : Strings.planDetail.addTask
+                }
+                placeholderTextColor={theme.textSecondary}
+                style={[styles.addInput, { color: theme.text }]}
+              />
+            </View>
+          ) : null}
+
           {/* Çizelgede sütunların ne olduğunu söyleyen ince başlık. */}
           {kind === 'schedule' && tasks.length > 0 ? (
             <View style={styles.columnHeader}>
@@ -243,9 +275,10 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
             dragEnabled={list.reordering}
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={styles.list}
-            renderItem={({ item }) => (
+            renderItem={({ item, index }) => (
               <TaskRow
                 task={item}
+                showDivider={index === dividerIndex && index > 0}
                 kind={kind}
                 mode={list.mode}
                 picked={list.has(item.id)}
@@ -258,29 +291,6 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
                 onPickTime={(field) => setTimeTarget({ task: item, field })}
               />
             )}
-            ListFooterComponent={
-              list.mode === 'normal' ? (
-                <View style={[styles.addRow, { backgroundColor: theme.backgroundElement }]}>
-                  <ThemedText themeColor="textSecondary">{Glyphs.add}</ThemedText>
-                  <TextInput
-                    ref={newTaskInput}
-                    onChangeText={(text) => {
-                      newTaskRef.current = text;
-                    }}
-                    onSubmitEditing={addTask}
-                    submitBehavior="submit"
-                    returnKeyType="done"
-                    placeholder={
-                      kind === 'schedule'
-                        ? Strings.planDetail.addScheduleRow
-                        : Strings.planDetail.addTask
-                    }
-                    placeholderTextColor={theme.textSecondary}
-                    style={[styles.addInput, { color: theme.text }]}
-                  />
-                </View>
-              ) : null
-            }
           />
 
           {list.selecting ? (
@@ -361,7 +371,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
     borderRadius: Radius.medium,
-    marginTop: Spacing.two,
+    marginBottom: Spacing.three,
   },
   addInput: {
     flex: 1,

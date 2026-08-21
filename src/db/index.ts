@@ -13,11 +13,13 @@ export type Note = {
 };
 
 /**
- * İki tür plan var:
- * - `checklist`: sade görev listesi, tik at geç.
+ * Üç tür plan var:
+ * - `checklist`: sade görev listesi. Tiklenen satır yerinde kalır.
  * - `schedule`: çizelge; her satırın başlangıç ve bitiş saati olabilir.
+ * - `sorted`: tiklenen satır listenin altına iner, yapılacaklar üstte toplanır.
+ *   Alışveriş listesi gibi kullanmak için.
  */
-export type PlanKind = 'checklist' | 'schedule';
+export type PlanKind = 'checklist' | 'schedule' | 'sorted';
 
 export type Plan = {
   id: number;
@@ -265,18 +267,27 @@ export function reorderPlans(db: SQLiteDatabase, ids: readonly number[]) {
 
 // --- Görevler ---
 
-export function listTasks(db: SQLiteDatabase, planId: number) {
+/**
+ * `sinkDone` yalnızca `sorted` planlar için açılır: tamamlananlar alta iner,
+ * her grubun içinde elle verilen sıra korunur.
+ */
+export function listTasks(db: SQLiteDatabase, planId: number, sinkDone = false) {
+  const order = sinkDone ? 'done ASC, position ASC, id ASC' : 'position ASC, id ASC';
+
   return db.getAllAsync<Task>(
-    'SELECT * FROM tasks WHERE plan_id = ? ORDER BY position ASC, id ASC',
+    `SELECT * FROM tasks WHERE plan_id = ? ORDER BY ${order}`,
     planId
   );
 }
 
-/** Yeni görev listenin sonuna eklenir — checklist doldurma yönü bu. */
+/**
+ * Yeni görev listenin başına eklenir. Yazma satırı listenin üstünde sabit
+ * durduğu için yazılan satırın hemen onun altında görünmesi gerekiyor.
+ */
 export function createTask(db: SQLiteDatabase, planId: number, title: string) {
   return db.runAsync(
     `INSERT INTO tasks (plan_id, title, done, created_at, position)
-     VALUES (?, ?, 0, ?, (SELECT COALESCE(MAX(position), -1) + 1 FROM tasks WHERE plan_id = ?))`,
+     VALUES (?, ?, 0, ?, (SELECT COALESCE(MIN(position), 0) - 1 FROM tasks WHERE plan_id = ?))`,
     planId,
     title,
     now(),
