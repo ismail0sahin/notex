@@ -1,20 +1,21 @@
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { Strings } from '@/constants/strings';
+import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import type { PlanKind } from '@/db';
 import { useTheme } from '@/hooks/use-theme';
 
 const OPTIONS: { kind: PlanKind; title: string; description: string }[] = [
   {
     kind: 'checklist',
-    title: 'Görev listesi',
-    description: 'Alt alta görevler, tik atarak tamamla. Saat yok.',
+    title: Strings.planTypes.checklistTitle,
+    description: Strings.planTypes.checklistDescription,
   },
   {
     kind: 'schedule',
-    title: 'Çizelge',
-    description: 'Her satırın başlangıç ve bitiş saati olur. Günü saatlere böl.',
+    title: Strings.planTypes.scheduleTitle,
+    description: Strings.planTypes.scheduleDescription,
   },
 ];
 
@@ -35,7 +36,7 @@ export function PlanTypeSheet({
       {/* Perdeye dokunmak kapatır; kartın kendisi dokunuşu tutar. */}
       <Pressable style={[styles.backdrop, { backgroundColor: theme.scrim }]} onPress={onCancel}>
         <View style={[styles.sheet, { backgroundColor: theme.background }]}>
-          <ThemedText type="smallBold">Nasıl bir plan?</ThemedText>
+          <ThemedText type="smallBold">{Strings.planTypes.question}</ThemedText>
 
           {OPTIONS.map((option) => (
             <Pressable
@@ -56,7 +57,7 @@ export function PlanTypeSheet({
 
           <Pressable onPress={onCancel} style={styles.cancel}>
             <ThemedText type="small" themeColor="textSecondary">
-              Vazgeç
+              {Strings.common.cancel}
             </ThemedText>
           </Pressable>
         </View>
@@ -77,12 +78,12 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
     gap: Spacing.two,
     padding: Spacing.four,
-    borderRadius: Spacing.four,
+    borderRadius: Radius.large,
   },
   option: {
     gap: Spacing.half,
     padding: Spacing.three,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.medium,
   },
   cancel: {
     alignSelf: 'center',

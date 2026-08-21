@@ -1,7 +1,8 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { FabSize, Spacing, TabBarHeight } from '@/constants/theme';
+import { Strings } from '@/constants/strings';
+import { FontSize, Glyphs, LineHeight, Sizes, Spacing, TabBarHeight } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 /** Çöp kutusu: kapak sapı, kapak ve gövde. İkon paketi kurmamak için View'lerle çizili. */
@@ -16,8 +17,8 @@ function TrashGlyph({ color }: { color: string }) {
 }
 
 const ACTIONS = {
-  add: { label: 'Yeni ekle' },
-  delete: { label: 'Seçilenleri sil' },
+  add: { label: Strings.a11y.add },
+  delete: { label: Strings.a11y.deleteSelected },
 } as const;
 
 /**
@@ -33,7 +34,7 @@ export function Fab({
   action?: keyof typeof ACTIONS;
   onPress: () => void;
   /** Altta ne kadar yer bırakılacağı. Sekmeli ekranlarda çubuğun yüksekliği,
-   *  tam ekran modallarda 0 verilir — orada sekme çubuğu yok. */
+   *  tam ekran panellerde 0 verilir — orada sekme çubuğu yok. */
   bottomInset?: number;
 }) {
   const theme = useTheme();
@@ -55,7 +56,7 @@ export function Fab({
       {action === 'delete' ? (
         <TrashGlyph color={theme.onAccent} />
       ) : (
-        <ThemedText style={[styles.plus, { color: theme.onAccent }]}>+</ThemedText>
+        <ThemedText style={[styles.plus, { color: theme.onAccent }]}>{Glyphs.add}</ThemedText>
       )}
     </Pressable>
   );
@@ -66,35 +67,34 @@ const styles = StyleSheet.create({
     position: 'absolute',
     // Ekranın yatay kenar boşluğuna ek olarak; büyütmek düğmeyi sola kaydırır.
     right: Spacing.three,
-    width: FabSize,
-    height: FabSize,
-    borderRadius: FabSize / 2,
+    width: Sizes.fab,
+    height: Sizes.fab,
+    borderRadius: Sizes.fab / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   plus: {
-    fontSize: 28,
-    lineHeight: 32,
-    fontWeight: 400,
+    fontSize: FontSize.fab,
+    lineHeight: LineHeight.fab,
   },
   glyph: {
     alignItems: 'center',
   },
   lidHandle: {
     width: 9,
-    height: 2,
-    borderRadius: 1,
+    height: Sizes.glyphStroke,
+    borderRadius: Sizes.glyphStroke / 2,
   },
   lid: {
     width: 19,
-    height: 2.5,
-    borderRadius: 1.5,
+    height: Sizes.glyphStroke + 0.5,
+    borderRadius: Sizes.glyphStroke / 2,
     marginTop: 2,
   },
   can: {
     width: 14,
     height: 14,
-    borderWidth: 2,
+    borderWidth: Sizes.glyphStroke,
     borderTopWidth: 0,
     borderBottomLeftRadius: 3,
     borderBottomRightRadius: 3,

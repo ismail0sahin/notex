@@ -191,10 +191,6 @@ export function updateNote(db: SQLiteDatabase, id: number, title: string, body: 
   );
 }
 
-export function deleteNote(db: SQLiteDatabase, id: number) {
-  return db.runAsync('DELETE FROM notes WHERE id = ?', id);
-}
-
 /** Çoklu seçimle silme. Tek sorgu, tek geçiş. */
 export function deleteNotes(db: SQLiteDatabase, ids: readonly number[]) {
   if (ids.length === 0) return Promise.resolve(null);

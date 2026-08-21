@@ -134,6 +134,3 @@ write_png(A + 'android-icon-monochrome.png', 1024, render(1024, 0.44, WHITE))
 
 # Acilis ekrani: krem zemin uzerine terracotta marka (zemin app.json'da).
 write_png(A + 'splash-icon.png', 512, render(512, 0.82, TERRACOTTA))
-
-# Web sekmesi.
-write_png(A + 'favicon.png', 64, render(64, 0.62, CREAM, TERRACOTTA))

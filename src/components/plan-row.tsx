@@ -3,7 +3,8 @@ import { useReorderableDrag } from 'react-native-reorderable-list';
 
 import { DragHandle } from '@/components/drag-handle';
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { Strings } from '@/constants/strings';
+import { Radius, Sizes, Spacing } from '@/constants/theme';
 import type { PlanWithProgress } from '@/db';
 import type { ListMode } from '@/hooks/use-list-mode';
 import { useTheme } from '@/hooks/use-theme';
@@ -31,9 +32,13 @@ export function PlanRow({
 
   // Çizelgelerde günün kapsamı; saat girilmemişse yalnızca tür adı görünür.
   const span =
-    plan.first_start && plan.last_end ? `${plan.first_start} – ${plan.last_end}` : 'Çizelge';
+    plan.first_start && plan.last_end
+      ? Strings.plans.timeSpan(plan.first_start, plan.last_end)
+      : Strings.plans.scheduleLabel;
   const counts =
-    plan.task_count === 0 ? 'Görev yok' : `${plan.done_count}/${plan.task_count} görev tamam`;
+    plan.task_count === 0
+      ? Strings.plans.noTasks
+      : Strings.plans.taskProgress(plan.done_count, plan.task_count);
   const secondary = plan.kind === 'schedule' ? `${span} · ${counts}` : counts;
 
   const handlePress = () => {
@@ -93,10 +98,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.three,
     padding: Spacing.three,
-    borderRadius: Spacing.three,
-    // Satır aralığı burada: sürüklenen hücrenin yüksekliğine dahil olması gerekiyor.
+    borderRadius: Radius.medium,
     marginBottom: Spacing.two,
-    borderWidth: 2,
+    borderWidth: Sizes.selectionBorder,
   },
   body: {
     flex: 1,
@@ -106,12 +110,12 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
   },
   progressTrack: {
-    height: 4,
-    borderRadius: 2,
+    height: Sizes.progressBar,
+    borderRadius: Sizes.progressBar / 2,
     overflow: 'hidden',
   },
   progressFill: {
-    height: 4,
-    borderRadius: 2,
+    height: Sizes.progressBar,
+    borderRadius: Sizes.progressBar / 2,
   },
 });

@@ -14,16 +14,17 @@ import { NoteRow } from '@/components/note-row';
 import { SlidePanel } from '@/components/slide-panel';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { FabSize, MaxContentWidth, Spacing, TabBarHeight } from '@/constants/theme';
+import { Strings } from '@/constants/strings';
 import {
-  createNote,
-  deleteNote,
-  deleteNotes,
-  listNotes,
-  reorderNotes,
-  updateNote,
-  type Note,
-} from '@/db';
+  FontSize,
+  FontWeight,
+  LineHeight,
+  MaxContentWidth,
+  Sizes,
+  Spacing,
+  TabBarHeight,
+} from '@/constants/theme';
+import { createNote, deleteNotes, listNotes, reorderNotes, updateNote, type Note } from '@/db';
 import { useListMode } from '@/hooks/use-list-mode';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -71,9 +72,9 @@ export default function NotesScreen() {
     }
 
     if (editing === 'new') {
-      await createNote(db, nextTitle || 'Başlıksız', nextBody);
+      await createNote(db, nextTitle || Strings.notes.untitled, nextBody);
     } else if (editing) {
-      await updateNote(db, editing.id, nextTitle || 'Başlıksız', nextBody);
+      await updateNote(db, editing.id, nextTitle || Strings.notes.untitled, nextBody);
     }
 
     setEditing(null);
@@ -90,26 +91,11 @@ export default function NotesScreen() {
     );
   }
 
-  function confirmDelete(note: Note) {
-    Alert.alert('Notu sil', `"${note.title}" kalıcı olarak silinecek.`, [
-      { text: 'Vazgeç', style: 'cancel' },
-      {
-        text: 'Sil',
-        style: 'destructive',
-        onPress: async () => {
-          await deleteNote(db, note.id);
-          setEditing(null);
-          reload();
-        },
-      },
-    ]);
-  }
-
   function confirmDeleteSelected() {
-    Alert.alert('Seçilenleri sil', `${list.count} not kalıcı olarak silinecek.`, [
-      { text: 'Vazgeç', style: 'cancel' },
+    Alert.alert(Strings.notes.deleteSelectedTitle, Strings.notes.deleteSelectedBody(list.count), [
+      { text: Strings.common.cancel, style: 'cancel' },
       {
-        text: 'Sil',
+        text: Strings.common.delete,
         style: 'destructive',
         onPress: async () => {
           await deleteNotes(db, list.ids);
@@ -124,13 +110,13 @@ export default function NotesScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <ThemedText type="subtitle">Notlar</ThemedText>
+          <ThemedText type="subtitle">{Strings.notes.title}</ThemedText>
           {list.mode === 'normal' ? (
             <ModeMenu onReorder={list.startReorder} onSelect={() => list.startSelect()} />
           ) : (
-            <Pressable onPress={list.reset} hitSlop={Spacing.two}>
+            <Pressable onPress={list.reset} hitSlop={Spacing.three}>
               <ThemedText themeColor="textSecondary">
-                {list.selecting ? 'Vazgeç' : 'Bitti'}
+                {list.selecting ? Strings.common.cancel : Strings.common.done}
               </ThemedText>
             </Pressable>
           )}
@@ -138,9 +124,7 @@ export default function NotesScreen() {
 
         {list.mode === 'normal' ? null : (
           <ThemedText type="small" themeColor="textSecondary">
-            {list.selecting
-              ? `${list.count} not seçili`
-              : 'Taşımak için satırı basılı tutup sürükle'}
+            {list.selecting ? Strings.notes.selected(list.count) : Strings.modes.reorderHintList}
           </ThemedText>
         )}
 
@@ -152,7 +136,7 @@ export default function NotesScreen() {
           contentContainerStyle={styles.list}
           ListEmptyComponent={
             <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
-              Henüz not yok. Sağ alttaki + ile ilk notunu ekle.
+              {Strings.notes.empty}
             </ThemedText>
           }
           renderItem={({ item }) => (
@@ -176,10 +160,10 @@ export default function NotesScreen() {
         {editing !== null ? (
           <ThemedView style={styles.container}>
             <SafeAreaView style={styles.safeArea}>
-              <View style={styles.modalHeader}>
+              <View style={styles.panelHeader}>
                 <BackButton onPress={() => setEditing(null)} />
                 <Pressable onPress={save} hitSlop={Spacing.three}>
-                  <ThemedText type="smallBold">Kaydet</ThemedText>
+                  <ThemedText type="smallBold">{Strings.common.save}</ThemedText>
                 </Pressable>
               </View>
 
@@ -188,7 +172,7 @@ export default function NotesScreen() {
                 onChangeText={(text) => {
                   titleRef.current = text;
                 }}
-                placeholder="Başlık"
+                placeholder={Strings.notes.titlePlaceholder}
                 placeholderTextColor={theme.textSecondary}
                 style={[styles.titleInput, { color: theme.text }]}
                 autoFocus
@@ -199,20 +183,12 @@ export default function NotesScreen() {
                 onChangeText={(text) => {
                   bodyRef.current = text;
                 }}
-                placeholder="Not..."
+                placeholder={Strings.notes.bodyPlaceholder}
                 placeholderTextColor={theme.textSecondary}
                 multiline
                 textAlignVertical="top"
                 style={[styles.bodyInput, { color: theme.text }]}
               />
-
-              {editing !== 'new' ? (
-                <Pressable onPress={() => confirmDelete(editing)} style={styles.deleteButton}>
-                  <ThemedText type="small" style={{ color: theme.danger }}>
-                    Notu sil
-                  </ThemedText>
-                </Pressable>
-              ) : null}
             </SafeAreaView>
           </ThemedView>
         ) : null}
@@ -241,27 +217,25 @@ const styles = StyleSheet.create({
   },
   list: {
     paddingTop: Spacing.two,
-    paddingBottom: TabBarHeight + FabSize + Spacing.four,
+    paddingBottom: TabBarHeight + Sizes.fab + Spacing.four,
   },
   empty: {
     paddingVertical: Spacing.four,
   },
-  modalHeader: {
+  panelHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: Spacing.two,
   },
   titleInput: {
-    fontSize: 24,
-    fontWeight: '600',
+    fontSize: FontSize.title,
+    lineHeight: LineHeight.title,
+    fontWeight: FontWeight.heading,
   },
   bodyInput: {
     flex: 1,
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  deleteButton: {
-    paddingVertical: Spacing.three,
+    fontSize: FontSize.body,
+    lineHeight: LineHeight.body,
   },
 });

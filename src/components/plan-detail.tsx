@@ -17,10 +17,19 @@ import { ModeMenu } from '@/components/mode-menu';
 import { TaskRow } from '@/components/task-row';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { FabSize, MaxContentWidth, Spacing } from '@/constants/theme';
+import { Strings } from '@/constants/strings';
+import {
+  FontSize,
+  FontWeight,
+  Glyphs,
+  LineHeight,
+  MaxContentWidth,
+  Radius,
+  Sizes,
+  Spacing,
+} from '@/constants/theme';
 import {
   createTask,
-  deletePlan,
   deleteTask,
   deleteTasks,
   getPlan,
@@ -39,7 +48,7 @@ import { dateToHm, hmToDate } from '@/lib/date';
 
 type TimeTarget = { task: Task; field: 'start' | 'end' };
 
-/** Planın içeriği: başlık, tarih ve görev listesi. Değişiklikler anında kaydedilir. */
+/** Planın içeriği: başlık ve görev listesi. Değişiklikler anında kaydedilir. */
 export function PlanDetail({ planId, onClose }: { planId: number; onClose: () => void }) {
   const db = useSQLiteContext();
   const theme = useTheme();
@@ -73,7 +82,7 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
     })();
   }, [db, planId, reloadTasks]);
 
-  const planTitle = () => titleRef.current.trim() || 'Başlıksız plan';
+  const planTitle = () => titleRef.current.trim() || Strings.planDetail.untitled;
 
   function saveTitle() {
     updatePlanTitle(db, planId, planTitle());
@@ -139,35 +148,32 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
   }
 
   function confirmDeleteSelected() {
-    Alert.alert('Seçilenleri sil', `${list.count} görev kalıcı olarak silinecek.`, [
-      { text: 'Vazgeç', style: 'cancel' },
-      {
-        text: 'Sil',
-        style: 'destructive',
-        onPress: async () => {
-          await deleteTasks(db, list.ids);
-          list.reset();
-          reloadTasks();
+    Alert.alert(
+      Strings.planDetail.deleteSelectedTitle,
+      Strings.planDetail.deleteSelectedBody(list.count),
+      [
+        { text: Strings.common.cancel, style: 'cancel' },
+        {
+          text: Strings.common.delete,
+          style: 'destructive',
+          onPress: async () => {
+            await deleteTasks(db, list.ids);
+            list.reset();
+            reloadTasks();
+          },
         },
-      },
-    ]);
-  }
-
-  function confirmDeletePlan() {
-    Alert.alert('Planı sil', `"${planTitle()}" ve içindeki görevler silinecek.`, [
-      { text: 'Vazgeç', style: 'cancel' },
-      {
-        text: 'Sil',
-        style: 'destructive',
-        onPress: async () => {
-          await deletePlan(db, planId);
-          onClose();
-        },
-      },
-    ]);
+      ]
+    );
   }
 
   const doneCount = tasks.filter((task) => task.done === 1).length;
+
+  function statusLine() {
+    if (list.selecting) return Strings.planDetail.selected(list.count);
+    if (list.reordering) return Strings.modes.reorderHintShort;
+    if (tasks.length === 0) return Strings.planDetail.noTasks;
+    return Strings.planDetail.progress(doneCount, tasks.length);
+  }
 
   // Başlık defaultValue ile mount anında okunuyor, o yüzden veri gelmeden alanı açmıyoruz.
   if (!loaded) return <ThemedView style={styles.container} />;
@@ -183,20 +189,14 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
             ) : (
               <Pressable onPress={list.reset} hitSlop={Spacing.three}>
                 <ThemedText themeColor="textSecondary">
-                  {list.selecting ? 'Vazgeç' : 'Bitti'}
+                  {list.selecting ? Strings.common.cancel : Strings.common.done}
                 </ThemedText>
               </Pressable>
             )}
 
             <View style={styles.headerRight}>
               <ThemedText type="small" themeColor="textSecondary">
-                {list.selecting
-                  ? `${list.count} görev seçili`
-                  : list.reordering
-                    ? 'Basılı tutup sürükle'
-                    : tasks.length === 0
-                      ? 'Görev yok'
-                      : `${doneCount}/${tasks.length} tamamlandı`}
+                {statusLine()}
               </ThemedText>
               {list.mode === 'normal' && tasks.length > 0 ? (
                 <ModeMenu onReorder={list.startReorder} onSelect={() => list.startSelect()} />
@@ -211,7 +211,11 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
               titleRef.current = text;
             }}
             onEndEditing={saveTitle}
-            placeholder={kind === 'schedule' ? 'Çizelge adı' : 'Plan adı'}
+            placeholder={
+              kind === 'schedule'
+                ? Strings.planDetail.schedulePlaceholder
+                : Strings.planDetail.namePlaceholder
+            }
             placeholderTextColor={theme.textSecondary}
             style={[styles.titleInput, { color: theme.text }]}
             multiline
@@ -221,13 +225,13 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
           {kind === 'schedule' && tasks.length > 0 ? (
             <View style={styles.columnHeader}>
               <ThemedText type="small" themeColor="textSecondary" style={styles.columnName}>
-                Görev
+                {Strings.planDetail.columnTask}
               </ThemedText>
               <ThemedText type="small" themeColor="textSecondary" style={styles.columnTime}>
-                Başlangıç
+                {Strings.planDetail.columnStart}
               </ThemedText>
               <ThemedText type="small" themeColor="textSecondary" style={styles.columnTime}>
-                Bitiş
+                {Strings.planDetail.columnEnd}
               </ThemedText>
             </View>
           ) : null}
@@ -256,28 +260,24 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
             )}
             ListFooterComponent={
               list.mode === 'normal' ? (
-                <View style={styles.footer}>
-                  <View style={[styles.addRow, { backgroundColor: theme.backgroundElement }]}>
-                    <ThemedText themeColor="textSecondary">+</ThemedText>
-                    <TextInput
-                      ref={newTaskInput}
-                      onChangeText={(text) => {
-                        newTaskRef.current = text;
-                      }}
-                      onSubmitEditing={addTask}
-                      submitBehavior="submit"
-                      returnKeyType="done"
-                      placeholder={kind === 'schedule' ? 'Satır ekle' : 'Görev ekle'}
-                      placeholderTextColor={theme.textSecondary}
-                      style={[styles.addInput, { color: theme.text }]}
-                    />
-                  </View>
-
-                  <Pressable onPress={confirmDeletePlan} style={styles.deleteButton}>
-                    <ThemedText type="small" style={{ color: theme.danger }}>
-                      Planı sil
-                    </ThemedText>
-                  </Pressable>
+                <View style={[styles.addRow, { backgroundColor: theme.backgroundElement }]}>
+                  <ThemedText themeColor="textSecondary">{Glyphs.add}</ThemedText>
+                  <TextInput
+                    ref={newTaskInput}
+                    onChangeText={(text) => {
+                      newTaskRef.current = text;
+                    }}
+                    onSubmitEditing={addTask}
+                    submitBehavior="submit"
+                    returnKeyType="done"
+                    placeholder={
+                      kind === 'schedule'
+                        ? Strings.planDetail.addScheduleRow
+                        : Strings.planDetail.addTask
+                    }
+                    placeholderTextColor={theme.textSecondary}
+                    style={[styles.addInput, { color: theme.text }]}
+                  />
                 </View>
               ) : null
             }
@@ -292,11 +292,12 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
           <DateTimePicker
             mode="time"
             is24Hour
-            display="clock"
+            // Alarm uygulamalarındaki gibi yukarı aşağı dönen saat/dakika tekerleği.
+            display="spinner"
             value={hmToDate(
               timeTarget.field === 'start' ? timeTarget.task.start_time : timeTarget.task.end_time
             )}
-            neutralButton={{ label: 'Temizle' }}
+            neutralButton={{ label: Strings.common.clearTime }}
             onChange={handleTimeChange}
           />
         ) : null}
@@ -328,8 +329,9 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   titleInput: {
-    fontSize: 24,
-    fontWeight: '600',
+    fontSize: FontSize.title,
+    lineHeight: LineHeight.title,
+    fontWeight: FontWeight.heading,
     paddingTop: Spacing.two,
     paddingBottom: Spacing.three,
   },
@@ -338,7 +340,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.two,
     // Satırdaki işaretleyici + boşluk kadar içeriden başlıyor ki sütunlar hizalansın.
-    paddingLeft: Spacing.two + 24 + Spacing.two,
+    paddingLeft: Spacing.two + Sizes.checkbox + Spacing.two,
     paddingRight: Spacing.two,
     paddingBottom: Spacing.one,
   },
@@ -346,15 +348,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   columnTime: {
-    minWidth: 48,
+    minWidth: Sizes.timeCell,
     textAlign: 'center',
   },
   list: {
-    paddingBottom: FabSize + Spacing.five,
-  },
-  footer: {
-    gap: Spacing.two,
-    paddingTop: Spacing.two,
+    paddingBottom: Sizes.fab + Spacing.five,
   },
   addRow: {
     flexDirection: 'row',
@@ -362,15 +360,13 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.medium,
+    marginTop: Spacing.two,
   },
   addInput: {
     flex: 1,
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: FontSize.body,
+    lineHeight: LineHeight.body,
     paddingVertical: Spacing.two,
-  },
-  deleteButton: {
-    paddingVertical: Spacing.three,
   },
 });

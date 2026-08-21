@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { FontSize, Glyphs, Sizes, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export function Checkbox({ checked, onPress }: { checked: boolean; onPress: () => void }) {
@@ -19,7 +19,9 @@ export function Checkbox({ checked, onPress }: { checked: boolean; onPress: () =
         checked && { backgroundColor: theme.accent },
       ]}>
       {checked ? (
-        <ThemedText style={[styles.checkmark, { color: theme.onAccent }]}>✓</ThemedText>
+        <ThemedText style={[styles.checkmark, { color: theme.onAccent }]}>
+          {Glyphs.check}
+        </ThemedText>
       ) : null}
     </Pressable>
   );
@@ -27,15 +29,15 @@ export function Checkbox({ checked, onPress }: { checked: boolean; onPress: () =
 
 const styles = StyleSheet.create({
   checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 2,
+    width: Sizes.checkbox,
+    height: Sizes.checkbox,
+    borderRadius: Sizes.checkbox / 2,
+    borderWidth: Sizes.checkboxBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
   checkmark: {
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: FontSize.check,
+    lineHeight: FontSize.check + 4,
   },
 });

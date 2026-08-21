@@ -1,5 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
+import { Sizes } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 /** Sıralama modunda satırın taşınabilir olduğunu gösteren tırtıl. */
@@ -22,7 +23,7 @@ const styles = StyleSheet.create({
   },
   bar: {
     width: 16,
-    height: 2,
-    borderRadius: 1,
+    height: Sizes.glyphStroke,
+    borderRadius: Sizes.glyphStroke / 2,
   },
 });

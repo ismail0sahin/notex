@@ -1,10 +1,10 @@
-import { Platform, StyleSheet, Text, type TextProps } from 'react-native';
+import { StyleSheet, Text, type TextProps } from 'react-native';
 
-import { Fonts, ThemeColor } from '@/constants/theme';
+import { FontSize, FontWeight, LineHeight, ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export type ThemedTextProps = TextProps & {
-  type?: 'default' | 'title' | 'small' | 'smallBold' | 'subtitle' | 'code';
+  type?: 'default' | 'small' | 'smallBold' | 'subtitle';
   themeColor?: ThemeColor;
 };
 
@@ -16,11 +16,9 @@ export function ThemedText({ style, type = 'default', themeColor, ...rest }: The
       style={[
         { color: theme[themeColor ?? 'text'] },
         type === 'default' && styles.default,
-        type === 'title' && styles.title,
         type === 'small' && styles.small,
         type === 'smallBold' && styles.smallBold,
         type === 'subtitle' && styles.subtitle,
-        type === 'code' && styles.code,
         style,
       ]}
       {...rest}
@@ -29,34 +27,24 @@ export function ThemedText({ style, type = 'default', themeColor, ...rest }: The
 }
 
 const styles = StyleSheet.create({
+  default: {
+    fontSize: FontSize.body,
+    lineHeight: LineHeight.body,
+    fontWeight: FontWeight.regular,
+  },
   small: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: 500,
+    fontSize: FontSize.small,
+    lineHeight: LineHeight.small,
+    fontWeight: FontWeight.regular,
   },
   smallBold: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: 700,
-  },
-  default: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: 500,
-  },
-  title: {
-    fontSize: 48,
-    fontWeight: 600,
-    lineHeight: 52,
+    fontSize: FontSize.small,
+    lineHeight: LineHeight.small,
+    fontWeight: FontWeight.bold,
   },
   subtitle: {
-    fontSize: 32,
-    lineHeight: 44,
-    fontWeight: 600,
-  },
-  code: {
-    fontFamily: Fonts.mono,
-    fontWeight: Platform.select({ android: 700 }) ?? 500,
-    fontSize: 12,
+    fontSize: FontSize.screenTitle,
+    lineHeight: LineHeight.screenTitle,
+    fontWeight: FontWeight.heading,
   },
 });

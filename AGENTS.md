@@ -47,8 +47,18 @@ Arayüz metinleri Türkçe.
   sarıyor. Modal içindeki hareketler kök görünüm olmadan çalışmaz.
 - `src/lib/date.ts` — `YYYY-MM-DD` yerel tarih yardımcıları. `toISOString()` UTC'ye
   kaydırdığı için tarih üretmede kullanılmaz.
-- Stil: `ThemedText` / `ThemedView` + `Colors`/`Spacing` (`src/constants/theme.ts`).
-  Yeni renk veya boşluk değeri elle yazılmaz, token eklenir.
+- `src/constants/` bütün arayüz tercihlerinin tek adresi. Kural: **kelimeler
+  `strings.ts`'te, görsel her şey `theme.ts`'te.** Bileşenlerin içinde düz metin,
+  renk kodu ya da çıplak ölçü bırakılmaz; oraya token eklenir.
+  - `strings.ts` — ekranda geçen her kelime. Sayı içeren cümleler fonksiyon
+    (`Strings.notes.selected(3)`), böylece dilbilgisi de tek yerde kalıyor.
+  - `theme.ts` — `Colors`, `Spacing`, `FontSize`, `LineHeight`, `FontWeight`,
+    `Radius`, `Sizes`, `Motion`, `Glyphs`, `TabBarHeight`, `MaxContentWidth`.
+- Hedef yalnızca Android: web desteği (`react-native-web`, `react-dom`, `.web.tsx`
+  dosyaları, `app.json`'daki `web` bloğu, favicon) kaldırıldı. Web geri istenirse
+  bunların hepsi yeniden eklenmeli.
+- Silme tek yoldan: `⋮` → Seç → çöp kutusu. Not ve plan panellerinin içinde silme
+  düğmesi yok, satır başına ✕ yok. Görev metnini boşaltıp çıkmak o satırı siler.
 
 ## Sürüm
 
@@ -84,7 +94,8 @@ listesinde bu alanlar boş kalır. Tek tablo, nullable kolonlar — iki ayrı g�
 tablosu tutmanın karşılığı yok.
 
 Saat girişi `@react-native-community/datetimepicker` ile Android'in kendi
-seçicisini açıyor. Elle "09:30" yazdırmak telefonda hataya davetiye; ayrıca
+seçicisini `display="spinner"` olarak açıyor — alarm uygulamalarındaki gibi yukarı
+aşağı dönen saat/dakika tekerleği. Elle "09:30" yazdırmak telefonda hataya davetiye; ayrıca
 seçicinin `neutralButton`'u "Temizle" olarak bağlı, yani girilen saat geri alınabilir.
 
 Çizelge satırları saate göre otomatik sıralanmıyor, `position` sırasında kalıyor.
@@ -114,7 +125,7 @@ Değiştirmek için `MARK` veya renkleri düzenle, sonra proje kökünde çalı�
     python scripts/make-icons.py
 
 Ürettiği dosyalar `assets/images/` altına yazılır: `icon.png`, `android-icon-{background,
-foreground,monochrome}.png`, `splash-icon.png`, `favicon.png`. Uyarlanabilir ikonun ön plan
+foreground,monochrome}.png`, `splash-icon.png`. Uyarlanabilir ikonun ön plan
 katmanı bilinçli olarak küçük (%44) — launcher bu katmanı kırpıp ölçekliyor.
 
 Açılış ekranı `expo-splash-screen` ile; zemin renkleri `app.json`'da (açık krem, koyu tema

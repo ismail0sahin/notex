@@ -1,11 +1,12 @@
 /**
- * Uygulamanın bütün renkleri ve boşlukları burada. Ekranlarda ham renk kodu
- * yazılmaz; palet değiştirmek gerektiğinde tek dosya yeter.
+ * Görsel tercihlerin tamamı: renkler, boşluklar, yazı boyutları, köşe
+ * yarıçapları, öğe ölçüleri ve animasyon süreleri.
+ *
+ * Bileşenlerin içinde çıplak sayı ya da renk kodu bırakılmaz; buraya bir token
+ * eklenir. Böylece bütün tasarım işi bu dosyayla `strings.ts`'te toplanıyor.
  *
  * Palet: "Kağıt" — kremli zemin, toprak tonu aksan.
  */
-
-import '@/global.css';
 
 import { Platform } from 'react-native';
 
@@ -16,11 +17,11 @@ export const Colors = {
     background: '#FBF8F3',
     backgroundElement: '#F2ECE2',
     backgroundSelected: '#E7DFD1',
-    /** İşaretleyici, + düğmesi, ilerleme çubuğu. */
+    /** İşaretleyici, + düğmesi, ilerleme çubuğu, seçili satır çerçevesi. */
     accent: '#B95F3B',
-    /** Aksan zemin üzerine gelen yazı ve simge rengi. */
+    /** Aksan ya da uyarı zemini üzerine gelen yazı ve simge rengi. */
     onAccent: '#FFFFFF',
-    /** Tarihi geçmiş planlar, silme eylemleri. */
+    /** Silme eylemleri. */
     danger: '#B3261E',
     /** Menü açıkken içeriğin üstüne inen perde. */
     scrim: 'rgba(42, 36, 32, 0.3)',
@@ -42,26 +43,12 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: 'ui-monospace',
   },
   default: {
     sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
     mono: 'monospace',
-  },
-  web: {
-    sans: 'var(--font-display)',
-    serif: 'var(--font-serif)',
-    rounded: 'var(--font-rounded)',
-    mono: 'var(--font-mono)',
   },
 });
 
@@ -75,6 +62,64 @@ export const Spacing = {
   six: 64,
 } as const;
 
+export const FontSize = {
+  /** Yardımcı metin, sütun başlıkları, sayaçlar. */
+  small: 14,
+  /** Gövde metni, görev ve not satırları. */
+  body: 16,
+  /** Panel başlıkları — plan adı, not başlığı. */
+  title: 24,
+  /** Sekme başlıkları — "Notlar", "Planlar". */
+  screenTitle: 32,
+  /** + düğmesindeki artı. */
+  fab: 28,
+  /** Geri okundaki ← işareti. */
+  back: 24,
+  /** İşaretleyicinin içindeki tik. */
+  check: 14,
+} as const;
+
+export const LineHeight = {
+  small: 20,
+  body: 24,
+  title: 30,
+  screenTitle: 44,
+  fab: 32,
+} as const;
+
+/** İki ağırlık yeter: normal metin ve vurgulu metin. */
+export const FontWeight = {
+  regular: '500',
+  bold: '700',
+  /** Başlıklar ve büyük yazılar. */
+  heading: '600',
+} as const;
+
+export const Radius = {
+  /** Saat hücreleri gibi küçük dokunma alanları. */
+  small: 8,
+  /** Satırlar, kartlar, menü. */
+  medium: 16,
+  /** Kapsül biçimli düğmeler. */
+  large: 24,
+} as const;
+
+export const Sizes = {
+  checkbox: 24,
+  checkboxBorder: 2,
+  /** Sağ alttaki yuvarlak düğmenin çapı. */
+  fab: 56,
+  /** Çizelgedeki saat sütununun en az genişliği. */
+  timeCell: 48,
+  /** Çöp kutusu, üç nokta ve tırtıl gibi çizilen simgelerin çizgi kalınlığı. */
+  glyphStroke: 2,
+  /** Seçili satırı belli eden çerçeve. Seçilmeyen satırlarda da şeffaf durur,
+   *  yoksa seçim anında satır yükseklikleri oynuyor. */
+  selectionBorder: 2,
+  /** İlerleme çubuğu. */
+  progressBar: 4,
+} as const;
+
 /**
  * Sekme çubuğunun yüksekliği. Ekranlar çubuğun arkasına kadar uzadığı için
  * sabitlenmiş öğeler (+ düğmesi) ve liste alt boşlukları bu kadar yukarı alınır.
@@ -82,7 +127,20 @@ export const Spacing = {
  */
 export const TabBarHeight = Platform.select({ ios: 72, android: 104 }) ?? 104;
 
-/** + düğmesinin çapı; listelerin altında bu kadar yer bırakılır ki son satır altında kalmasın. */
-export const FabSize = 56;
+/** Panellerin sağdan kayma süreleri (ms). */
+export const Motion = {
+  panelOpen: 220,
+  panelClose: 180,
+} as const;
+
+/**
+ * İkon yerine kullanılan simgeler. Kelimeler `strings.ts`'te, görsel öğeler
+ * burada: çöp kutusu, üç nokta ve tırtıl View'lerle çizili, bunlar ise karakter.
+ */
+export const Glyphs = {
+  check: '✓',
+  add: '+',
+  back: '←',
+} as const;
 
 export const MaxContentWidth = 800;

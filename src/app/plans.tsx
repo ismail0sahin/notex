@@ -15,7 +15,8 @@ import { PlanTypeSheet } from '@/components/plan-type-sheet';
 import { SlidePanel } from '@/components/slide-panel';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { FabSize, MaxContentWidth, Spacing, TabBarHeight } from '@/constants/theme';
+import { Strings } from '@/constants/strings';
+import { MaxContentWidth, Sizes, Spacing, TabBarHeight } from '@/constants/theme';
 import {
   createPlan,
   deletePlan,
@@ -28,9 +29,6 @@ import {
   type PlanWithProgress,
 } from '@/db';
 import { useListMode } from '@/hooks/use-list-mode';
-
-/** + ile açılan plan bu adla oluşur; kullanıcı dokunmadan çıkarsa geri alınır. */
-const NEW_PLAN_TITLE = 'Yeni plan';
 
 export default function PlansScreen() {
   const db = useSQLiteContext();
@@ -49,7 +47,7 @@ export default function PlansScreen() {
 
   async function addPlan(kind: PlanKind) {
     setAskingKind(false);
-    const id = await createPlan(db, NEW_PLAN_TITLE, null, kind);
+    const id = await createPlan(db, Strings.plans.newTitle, null, kind);
     await reload();
     setOpenPlanId(Number(id));
   }
@@ -58,7 +56,7 @@ export default function PlansScreen() {
     // + basıp hiçbir şey yazmadan çıkıldıysa boş planı listede bırakma.
     const plan = await getPlan(db, planId);
 
-    if (plan && plan.title === NEW_PLAN_TITLE) {
+    if (plan && plan.title === Strings.plans.newTitle) {
       const tasks = await listTasks(db, planId);
       if (tasks.length === 0) await deletePlan(db, planId);
     }
@@ -78,52 +76,49 @@ export default function PlansScreen() {
   }
 
   function confirmDeleteSelected() {
-    Alert.alert(
-      'Seçilenleri sil',
-      `${list.count} plan ve içindeki bütün görevler kalıcı olarak silinecek.`,
-      [
-        { text: 'Vazgeç', style: 'cancel' },
-        {
-          text: 'Sil',
-          style: 'destructive',
-          onPress: async () => {
-            await deletePlans(db, list.ids);
-            list.reset();
-            reload();
-          },
+    Alert.alert(Strings.plans.deleteSelectedTitle, Strings.plans.deleteSelectedBody(list.count), [
+      { text: Strings.common.cancel, style: 'cancel' },
+      {
+        text: Strings.common.delete,
+        style: 'destructive',
+        onPress: async () => {
+          await deletePlans(db, list.ids);
+          list.reset();
+          reload();
         },
-      ]
-    );
+      },
+    ]);
   }
 
   const activeCount = plans.filter(
     (plan) => plan.task_count === 0 || plan.done_count < plan.task_count
   ).length;
 
+  function statusLine() {
+    if (list.selecting) return Strings.plans.selected(list.count);
+    if (list.reordering) return Strings.modes.reorderHintList;
+    if (plans.length === 0) return Strings.plans.none;
+    return Strings.plans.running(activeCount);
+  }
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <ThemedText type="subtitle">Planlar</ThemedText>
+          <ThemedText type="subtitle">{Strings.plans.title}</ThemedText>
           {list.mode === 'normal' ? (
             <ModeMenu onReorder={list.startReorder} onSelect={() => list.startSelect()} />
           ) : (
-            <Pressable onPress={list.reset} hitSlop={Spacing.two}>
+            <Pressable onPress={list.reset} hitSlop={Spacing.three}>
               <ThemedText themeColor="textSecondary">
-                {list.selecting ? 'Vazgeç' : 'Bitti'}
+                {list.selecting ? Strings.common.cancel : Strings.common.done}
               </ThemedText>
             </Pressable>
           )}
         </View>
 
         <ThemedText type="small" themeColor="textSecondary">
-          {list.selecting
-            ? `${list.count} plan seçili`
-            : list.reordering
-              ? 'Taşımak için satırı basılı tutup sürükle'
-              : plans.length === 0
-                ? 'Plan yok'
-                : `${activeCount} plan sürüyor`}
+          {statusLine()}
         </ThemedText>
 
         <ReorderableList
@@ -134,7 +129,7 @@ export default function PlansScreen() {
           contentContainerStyle={styles.list}
           ListEmptyComponent={
             <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
-              Henüz plan yok. Sağ alttaki + ile bir plan oluştur, içine görevlerini ekle.
+              {Strings.plans.empty}
             </ThemedText>
           }
           renderItem={({ item }) => (
@@ -190,7 +185,7 @@ const styles = StyleSheet.create({
   },
   list: {
     paddingTop: Spacing.two,
-    paddingBottom: TabBarHeight + FabSize + Spacing.four,
+    paddingBottom: TabBarHeight + Sizes.fab + Spacing.four,
   },
   empty: {
     paddingVertical: Spacing.four,

@@ -7,8 +7,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-const OPEN_MS = 220;
-const CLOSE_MS = 180;
+import { Motion } from '@/constants/theme';
 
 /**
  * Tam ekran panel; sağdan kayarak girer, sağa kayarak çıkar.
@@ -33,11 +32,11 @@ export function SlidePanel({
   useEffect(() => {
     if (visible) {
       setMounted(true);
-      progress.value = withTiming(1, { duration: OPEN_MS });
+      progress.value = withTiming(1, { duration: Motion.panelOpen });
       return;
     }
 
-    progress.value = withTiming(0, { duration: CLOSE_MS }, (finished) => {
+    progress.value = withTiming(0, { duration: Motion.panelClose }, (finished) => {
       if (finished) runOnJS(setMounted)(false);
     });
   }, [visible, progress]);

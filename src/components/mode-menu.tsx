@@ -3,7 +3,8 @@ import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { Strings } from '@/constants/strings';
+import { Radius, Sizes, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 /** Üç nokta. İkon paketi kurmamak için View'lerle çizili. */
@@ -44,7 +45,7 @@ export function ModeMenu({
         onPress={() => setOpen(true)}
         hitSlop={Spacing.three}
         accessibilityRole="button"
-        accessibilityLabel="Liste menüsü">
+        accessibilityLabel={Strings.a11y.listMenu}>
         <DotsGlyph color={theme.textSecondary} />
       </Pressable>
 
@@ -61,9 +62,9 @@ export function ModeMenu({
                   styles.item,
                   pressed && { backgroundColor: theme.backgroundSelected },
                 ]}>
-                <ThemedText>Sırala</ThemedText>
+                <ThemedText>{Strings.modes.reorder}</ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">
-                  Basılı tutup taşı
+                  {Strings.modes.reorderDescription}
                 </ThemedText>
               </Pressable>
 
@@ -75,9 +76,9 @@ export function ModeMenu({
                   styles.item,
                   pressed && { backgroundColor: theme.backgroundSelected },
                 ]}>
-                <ThemedText>Seç</ThemedText>
+                <ThemedText>{Strings.modes.select}</ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">
-                  Çoklu seçip sil
+                  {Strings.modes.selectDescription}
                 </ThemedText>
               </Pressable>
             </View>
@@ -95,9 +96,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.two,
   },
   dot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    width: Sizes.glyphStroke * 2,
+    height: Sizes.glyphStroke * 2,
+    borderRadius: Sizes.glyphStroke,
   },
   backdrop: {
     flex: 1,
@@ -110,7 +111,7 @@ const styles = StyleSheet.create({
   },
   menu: {
     minWidth: 180,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.medium,
     overflow: 'hidden',
   },
   item: {

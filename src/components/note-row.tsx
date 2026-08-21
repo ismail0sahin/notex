@@ -3,11 +3,11 @@ import { useReorderableDrag } from 'react-native-reorderable-list';
 
 import { DragHandle } from '@/components/drag-handle';
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { Radius, Sizes, Spacing } from '@/constants/theme';
+import type { Note } from '@/db';
 import type { ListMode } from '@/hooks/use-list-mode';
 import { useTheme } from '@/hooks/use-theme';
-import type { Note } from '@/db';
-import { formatDue } from '@/lib/date';
+import { formatDate } from '@/lib/date';
 
 /**
  * Uzun basış moda göre iş değiştirir: normalde çoklu seçimi açar, sıralama
@@ -62,7 +62,7 @@ export function NoteRow({
           </ThemedText>
         ) : null}
         <ThemedText type="small" themeColor="textSecondary">
-          {formatDue(note.updated_at.slice(0, 10)) ?? ''}
+          {formatDate(note.updated_at.slice(0, 10))}
         </ThemedText>
       </View>
 
@@ -77,12 +77,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.three,
     padding: Spacing.three,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.medium,
     // Satır aralığı burada: sürüklenen hücrenin yüksekliğine dahil olması gerekiyor.
     marginBottom: Spacing.two,
-    // Çerçeve seçilmeyen satırlarda da duruyor (şeffaf), yoksa seçim anında
-    // yükseklikler oynuyor.
-    borderWidth: 2,
+    borderWidth: Sizes.selectionBorder,
   },
   body: {
     flex: 1,

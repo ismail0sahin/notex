@@ -5,7 +5,8 @@ import { useReorderableDrag } from 'react-native-reorderable-list';
 import { Checkbox } from '@/components/checkbox';
 import { DragHandle } from '@/components/drag-handle';
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { Strings } from '@/constants/strings';
+import { FontSize, LineHeight, Radius, Sizes, Spacing } from '@/constants/theme';
 import type { PlanKind, Task } from '@/db';
 import type { ListMode } from '@/hooks/use-list-mode';
 import { useTheme } from '@/hooks/use-theme';
@@ -35,7 +36,7 @@ function TimeCell({
         { backgroundColor: pressed ? theme.backgroundSelected : 'transparent' },
       ]}>
       <ThemedText type="small" themeColor={value ? 'text' : 'textSecondary'}>
-        {value ?? '--:--'}
+        {value ?? Strings.planDetail.emptyTime}
       </ThemedText>
     </Pressable>
   );
@@ -114,7 +115,7 @@ export function TaskRow({
           onBlur={() => onSave(draftRef.current)}
           onSubmitEditing={() => onSave(draftRef.current)}
           returnKeyType="done"
-          placeholder="Görev"
+          placeholder={Strings.planDetail.taskPlaceholder}
           placeholderTextColor={theme.textSecondary}
           style={[styles.text, { color: theme.text }]}
         />
@@ -133,13 +134,13 @@ export function TaskRow({
             value={task.start_time}
             disabled={!normal}
             onPress={() => onPickTime('start')}
-            label="Başlangıç saati"
+            label={Strings.a11y.startTime}
           />
           <TimeCell
             value={task.end_time}
             disabled={!normal}
             onPress={() => onPickTime('end')}
-            label="Bitiş saati"
+            label={Strings.a11y.endTime}
           />
         </>
       ) : null}
@@ -156,8 +157,8 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
-    borderRadius: Spacing.three,
-    borderWidth: 2,
+    borderRadius: Radius.medium,
+    borderWidth: Sizes.selectionBorder,
     // Satır aralığı burada: sürüklenen hücrenin yüksekliğine dahil olması gerekiyor.
     marginBottom: Spacing.two,
   },
@@ -168,18 +169,18 @@ const styles = StyleSheet.create({
   },
   text: {
     flex: 1,
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: FontSize.body,
+    lineHeight: LineHeight.body,
     paddingVertical: Spacing.two,
   },
   doneText: {
     textDecorationLine: 'line-through',
   },
   timeCell: {
-    minWidth: 48,
+    minWidth: Sizes.timeCell,
     alignItems: 'center',
     paddingVertical: Spacing.one,
     paddingHorizontal: Spacing.one,
-    borderRadius: Spacing.two,
+    borderRadius: Radius.small,
   },
 });

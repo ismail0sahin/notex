@@ -1,4 +1,4 @@
-const MONTHS = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+import { Strings } from '@/constants/strings';
 
 /** Yerel saate göre 'YYYY-MM-DD'. toISOString() UTC'ye kaydırdığı için kullanılmıyor. */
 export function toYmd(date: Date) {
@@ -11,26 +11,13 @@ export function todayYmd() {
   return toYmd(new Date());
 }
 
-export function tomorrowYmd() {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  return toYmd(d);
-}
-
-/** Liste satırlarında gösterilen kısa etiket. */
-export function formatDue(ymd: string | null) {
-  if (!ymd) return null;
-  if (ymd === todayYmd()) return 'Bugün';
-  if (ymd === tomorrowYmd()) return 'Yarın';
+/** Not satırlarında son düzenleme tarihi için kısa etiket. */
+export function formatDate(ymd: string) {
+  if (ymd === todayYmd()) return Strings.today;
 
   const [year, month, day] = ymd.split('-').map(Number);
-  const label = `${day} ${MONTHS[month - 1]}`;
+  const label = `${day} ${Strings.months[month - 1]}`;
   return year === new Date().getFullYear() ? label : `${label} ${year}`;
-}
-
-/** Tarihi geçmiş ve bitmemiş planları vurgulamak için. */
-export function isOverdue(ymd: string | null) {
-  return ymd !== null && ymd < todayYmd();
 }
 
 // --- Çizelge saatleri ---

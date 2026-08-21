@@ -1,7 +1,8 @@
 import { Pressable, StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { Strings } from '@/constants/strings';
+import { FontSize, Glyphs, LineHeight, Spacing } from '@/constants/theme';
 
 /** Sol üstteki geri düğmesi. Panel sağdan geldiği için yön sola bakıyor. */
 export function BackButton({ onPress }: { onPress: () => void }) {
@@ -10,9 +11,9 @@ export function BackButton({ onPress }: { onPress: () => void }) {
       onPress={onPress}
       hitSlop={Spacing.three}
       accessibilityRole="button"
-      accessibilityLabel="Geri">
+      accessibilityLabel={Strings.a11y.back}>
       <ThemedText themeColor="textSecondary" style={styles.arrow}>
-        ←
+        {Glyphs.back}
       </ThemedText>
     </Pressable>
   );
@@ -20,7 +21,7 @@ export function BackButton({ onPress }: { onPress: () => void }) {
 
 const styles = StyleSheet.create({
   arrow: {
-    fontSize: 24,
-    lineHeight: 30,
+    fontSize: FontSize.back,
+    lineHeight: LineHeight.title,
   },
 });

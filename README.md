@@ -91,7 +91,8 @@ Bunları görmek için gerçek bir derleme almak gerekir.
 | `src/app/plans.tsx` | Planlar sekmesi (plan listesi) |
 | `src/components/plan-detail.tsx` | Bir planın içi: başlık, tarih, görev listesi |
 | `src/components/app-tabs.tsx` | Sekmeler; adları dosya adlarıyla eşleşir |
-| `src/constants/theme.ts` | Bütün renkler ve boşluklar |
+| `src/constants/theme.ts` | Bütün görsel tercihler: renk, boşluk, ölçü, süre |
+| `src/constants/strings.ts` | Arayüzde geçen bütün metinler |
 | `src/lib/date.ts` | `YYYY-MM-DD` yerel tarih yardımcıları |
 | `scripts/make-icons.py` | İkon ve açılış görseli üretici |
 
@@ -110,13 +111,18 @@ uygulamalardaki veri bozulur.
 
 ## Renkler
 
-Palet "Kağıt": kremli zemin, toprak tonu aksan. Bütün renkler
-`src/constants/theme.ts` içindeki `Colors` nesnesinde, açık ve koyu tema için
-ayrı. `theme.ts` dışında hiçbir dosyada ham renk kodu yok — paleti değiştirmek
-için tek dosya yeter.
+Bütün arayüz tasarımı `src/constants/` altındaki iki dosyada. Kural basit:
+**kelimeler `strings.ts`'te, görsel her şey `theme.ts`'te.** Bileşenlerin içinde
+düz metin, renk kodu ya da çıplak ölçü yok.
 
-Token'lar: `text`, `textSecondary`, `background`, `backgroundElement`,
-`backgroundSelected`, `accent`, `onAccent`, `danger`.
+`theme.ts` — palet "Kağıt" (kremli zemin, toprak tonu aksan), açık ve koyu tema
+için ayrı: `Colors`. Yanında `Spacing`, `FontSize`, `LineHeight`, `FontWeight`,
+`Radius`, `Sizes`, `Motion` ve `Glyphs`. Paleti ya da ölçüleri değiştirmek için
+tek dosya yeter.
+
+`strings.ts` — ekranda geçen her kelime. Sayı içeren cümleler fonksiyon
+(`Strings.plans.running(3)`), böylece dilbilgisi de tek yerde kalıyor.
+Uygulamayı başka bir dile çevirmek bu dosyayı değiştirmek demek.
 
 ## İkonlar
 
@@ -129,7 +135,7 @@ python scripts/make-icons.py
 
 Marka, script'in başındaki `MARK` listesinde kapsül olarak tanımlı: iki not
 satırı ve bir onay işareti. Değiştirip yeniden çalıştırmak `assets/images/`
-altındaki altı görseli birden yeniler.
+altındaki beş görseli birden yeniler.
 
 ## Kontroller
 
@@ -154,6 +160,10 @@ template yamalarını listeliyor.
 
 **Emülatörde Türkçe yazmak** — cihaz ayarlarından "Enable keyboard input"
 kapatılıp emülatörün kendi ekran klavyesi kullanılmalı.
+
+**Hedef yalnızca Android.** Web desteği kaldırıldı (`react-native-web`,
+`react-dom`, `.web.tsx` dosyaları, `app.json`'daki `web` bloğu). Geri istenirse
+hepsi yeniden eklenmeli.
 
 **Metin alanları kontrolsüz** (`defaultValue` + ref). Her tuşta metni state
 üzerinden `value` olarak geri yazmak Android klavyesinde harf düşmesine yol
