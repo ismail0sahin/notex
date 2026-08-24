@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { Strings } from '@/constants/strings';
@@ -23,8 +24,9 @@ const ACTIONS = {
 
 /**
  * Ekranın sağ alt köşesinde sabit durur; liste kaydırılsa da yeri değişmez.
- * SafeAreaView'in içine yerleştirilmeli — konumu onun iç kenarına göre hesaplanır,
- * böylece cihazın alt gezinme boşluğu kendiliğinden hesaba katılır.
+ *
+ * Alt konum cihazdan ölçülen gezinme boşluğu üzerine hesaplanıyor; ekranların
+ * `SafeAreaView`'i alt kenarı kapattığı için burada çift sayım olmuyor.
  */
 export function Fab({
   action = 'add',
@@ -38,6 +40,7 @@ export function Fab({
   bottomInset?: number;
 }) {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const background = action === 'delete' ? theme.danger : theme.accent;
 
   return (
@@ -49,7 +52,7 @@ export function Fab({
         styles.fab,
         {
           backgroundColor: background,
-          bottom: bottomInset + Spacing.three,
+          bottom: insets.bottom + bottomInset + Spacing.three,
           opacity: pressed ? 0.85 : 1,
         },
       ]}>

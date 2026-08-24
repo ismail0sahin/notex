@@ -141,11 +141,15 @@ export const Sizes = {
 } as const;
 
 /**
- * Sekme çubuğunun yüksekliği. Ekranlar çubuğun arkasına kadar uzadığı için
- * sabitlenmiş öğeler (+ düğmesi) ve liste alt boşlukları bu kadar yukarı alınır.
- * Cihazın alt çentik/gezinme boşluğu SafeAreaView tarafından ayrıca eklenir.
+ * Sekme çubuğunun kendi yüksekliği — cihazın gezinme boşluğu HARİÇ.
+ *
+ * Ekranlar çubuğun arkasına kadar uzanıyor. Sabitlenmiş öğeler (+ düğmesi) ve
+ * liste alt boşlukları `useSafeAreaInsets().bottom + TabBarHeight` kadar yukarı
+ * alınır. Boşluk `SafeAreaView`'e bırakılmıyor: sekmeli ekranlarda alt kenarı
+ * bazen çubuk tükettiği için ne kadar eklendiği belirsiz kalıyordu, o yüzden
+ * ekranlar `edges` ile alt kenarı kapatıp hesabı açıkça yapıyor.
  */
-export const TabBarHeight = Platform.select({ ios: 72, android: 104 }) ?? 104;
+export const TabBarHeight = Platform.select({ ios: 49, android: 80 }) ?? 80;
 
 /** Panellerin sağdan kayma süreleri (ms). */
 export const Motion = {

@@ -95,7 +95,18 @@ Arayüz metinleri Türkçe.
   selected}}` prop'undan geliyor, etiket rengi de `labelStyle={{default,
   selected}}`'dan. İkisi de temanın `textSecondary` / `accent` / `text`
   tonlarını kullanıyor, dolayısıyla koyu temada kendiliğinden açılıyor.
-  PNG'deki ton yalnızca boyama uygulanmazsa görünecek yedek.
+- İkon kaynağı ortama göre değişiyor ve bu **bilinçli**: geliştirmede `src`,
+  gerçek derlemede `drawable`. Sebep `react-native-screens` 4.16'nın native
+  kodu — release'te JS varlığını kaynak olarak yalnızca adı `_` ile başlıyorsa
+  çözüyor, Expo'nun ürettiği ad (`assets_images_tabicons_notes`) öyle olmadığı
+  için ikon sessizce çizilmiyordu. `drawable` yolu adı doğrudan `getIdentifier`
+  ile arıyor. Gerçek Android kaynaklarını `plugins/with-tab-icons.js` prebuild
+  sırasında `res/drawable-*` altına kopyalıyor. Expo Go'da o kaynaklar
+  bulunmadığı için orada `src` şart.
+- Alt kenar boşluğu `SafeAreaView`'e bırakılmıyor; ekranlar `edges={['top',
+  'left', 'right']}` kullanıp hesabı açıkça yapıyor: `insets.bottom +
+  TabBarHeight`. Sekmeli ekranlarda alt kenarı bazen çubuğun tüketmesi yüzünden
+  ne kadar boşluk eklendiği belirsizdi ve `+` düğmesi çubuğun altında kalıyordu.
 - `expo-system-ui` kodda hiçbir yerde import edilmiyor ama **kaldırılmamalı**:
   `app.json`'daki `userInterfaceStyle` ayarının native karşılığını o kuruyor.
   Onsuz cihaz teması doğru okunmuyor ve "Sistem" görünüm seçeneği çalışmıyor.

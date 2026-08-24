@@ -226,6 +226,10 @@ uyarlanabilir ikonun üç katmanı, açılış görseli ve sekme ikonları.
 Sekme ikonları tek renkli maske olarak üretiliyor; rengini `NativeTabs`'in
 `iconColor` prop'u veriyor, yani tema değişince ikon da değişiyor.
 
+İkonlar ayrıca `plugins/with-tab-icons.js` ile gerçek Android kaynağı olarak da
+kopyalanıyor (`res/drawable-*`). Gerçek derlemede kullanılan yol bu; Expo Go'da
+o kaynaklar bulunmadığı için orada JS varlığı kullanılıyor.
+
 ## Kontroller
 
 ```bash

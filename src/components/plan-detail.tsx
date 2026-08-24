@@ -9,7 +9,7 @@ import ReorderableList, {
   reorderItems,
   type ReorderableListReorderEvent,
 } from 'react-native-reorderable-list';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackButton } from '@/components/back-button';
 import { Fab } from '@/components/fab';
@@ -53,6 +53,7 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
   const db = useSQLiteContext();
   const theme = useTheme();
   const list = useListMode();
+  const insets = useSafeAreaInsets();
   const [loaded, setLoaded] = useState(false);
   const [kind, setKind] = useState<PlanKind>('checklist');
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -196,7 +197,7 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
     // Modal içindeki hareketler kendi kökünü ister; bu olmadan sürükleme çalışmaz.
     <GestureHandlerRootView style={styles.container}>
       <ThemedView style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
+        <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
           <View style={styles.header}>
             {list.mode === 'normal' ? (
               <BackButton onPress={onClose} />
@@ -279,7 +280,7 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
             onReorder={handleReorder}
             dragEnabled={list.reordering}
             keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.list}
+            contentContainerStyle={{ paddingBottom: insets.bottom + Sizes.fab + Spacing.five }}
             renderItem={({ item, index }) => (
               <TaskRow
                 task={item}
@@ -370,9 +371,7 @@ const styles = StyleSheet.create({
     minWidth: Sizes.timeCell,
     textAlign: 'center',
   },
-  list: {
-    paddingBottom: Sizes.fab + Spacing.five,
-  },
+
   addRow: {
     flexDirection: 'row',
     alignItems: 'center',

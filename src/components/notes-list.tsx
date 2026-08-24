@@ -5,7 +5,7 @@ import ReorderableList, {
   reorderItems,
   type ReorderableListReorderEvent,
 } from 'react-native-reorderable-list';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackButton } from '@/components/back-button';
 import { Fab } from '@/components/fab';
@@ -58,6 +58,7 @@ export function NotesList({
   const db = useSQLiteContext();
   const theme = useTheme();
   const list = useListMode();
+  const insets = useSafeAreaInsets();
   const [notes, setNotes] = useState<Note[]>([]);
   const [editing, setEditing] = useState<Editing>(null);
 
@@ -146,7 +147,7 @@ export function NotesList({
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <View style={styles.header}>
           {onBack ? <BackButton onPress={onBack} /> : null}
           <ThemedText type="subtitle" style={styles.title} numberOfLines={1}>
@@ -189,7 +190,10 @@ export function NotesList({
           keyExtractor={(item) => String(item.id)}
           onReorder={handleReorder}
           dragEnabled={list.reordering}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[
+            styles.list,
+            { paddingBottom: insets.bottom + TabBarHeight + Sizes.fab + Spacing.four },
+          ]}
           ListEmptyComponent={
             <View style={[styles.empty, { borderColor: theme.borderSubtle }]}>
               <ThemedText type="small" themeColor="textSecondary" style={styles.emptyText}>
@@ -282,7 +286,6 @@ const styles = StyleSheet.create({
   },
   list: {
     paddingTop: Spacing.two,
-    paddingBottom: TabBarHeight + Sizes.fab + Spacing.four,
   },
   headerRule: {
     height: Sizes.hairline,

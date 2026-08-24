@@ -5,7 +5,7 @@ import ReorderableList, {
   reorderItems,
   type ReorderableListReorderEvent,
 } from 'react-native-reorderable-list';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Fab } from '@/components/fab';
 import { ModeMenu } from '@/components/mode-menu';
@@ -54,6 +54,7 @@ export default function PlansScreen() {
   const db = useSQLiteContext();
   const theme = useTheme();
   const list = useListMode();
+  const insets = useSafeAreaInsets();
   const [plans, setPlans] = useState<PlanWithProgress[]>([]);
   const [openPlanId, setOpenPlanId] = useState<number | null>(null);
   const [askingKind, setAskingKind] = useState(false);
@@ -124,7 +125,7 @@ export default function PlansScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <View style={styles.header}>
           <ThemedText type="subtitle">{Strings.plans.title}</ThemedText>
           {list.mode === 'normal' ? (
@@ -149,7 +150,10 @@ export default function PlansScreen() {
           keyExtractor={(item) => String(item.id)}
           onReorder={handleReorder}
           dragEnabled={list.reordering}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[
+            styles.list,
+            { paddingBottom: insets.bottom + TabBarHeight + Sizes.fab + Spacing.four },
+          ]}
           ListEmptyComponent={
             <View style={[styles.empty, { borderColor: theme.borderSubtle }]}>
               <ThemedText type="small" themeColor="textSecondary" style={styles.emptyText}>
@@ -212,7 +216,6 @@ const styles = StyleSheet.create({
   },
   list: {
     paddingTop: Spacing.two,
-    paddingBottom: TabBarHeight + Sizes.fab + Spacing.four,
   },
   headerRule: {
     height: Sizes.hairline,
