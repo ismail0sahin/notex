@@ -5,6 +5,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { LinearTransition } from 'react-native-reanimated';
 import ReorderableList, {
   reorderItems,
   type ReorderableListReorderEvent,
@@ -24,6 +25,7 @@ import {
   Glyphs,
   LineHeight,
   MaxContentWidth,
+  Motion,
   Radius,
   Sizes,
   Spacing,
@@ -279,6 +281,13 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
             keyExtractor={(item) => String(item.id)}
             onReorder={handleReorder}
             dragEnabled={list.reordering}
+            // Tamamlanan satır `sorted` planlarda alta iner; aniden yer
+            // değiştirmesi takip edilemiyordu, kayarak gidiyor. Sıralama
+            // modunda kapalı: kütüphanenin kendi sürükleme animasyonuyla
+            // aynı anda çalışınca satır iki kez oynuyor.
+            itemLayoutAnimation={
+              list.reordering ? undefined : LinearTransition.duration(Motion.rowSettle)
+            }
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={{ paddingBottom: insets.bottom + Sizes.fab + Spacing.five }}
             renderItem={({ item, index }) => (

@@ -8,6 +8,7 @@ import type { Note } from '@/db';
 import type { ListMode } from '@/hooks/use-list-mode';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDate } from '@/lib/date';
+import { held } from '@/lib/haptics';
 import { notePreview } from '@/lib/note';
 
 /**
@@ -40,6 +41,7 @@ export function NoteRow({
   };
 
   const handleLongPress = () => {
+    held();
     if (mode === 'reorder') drag();
     else if (mode === 'normal') onStartSelect();
     else onToggle();

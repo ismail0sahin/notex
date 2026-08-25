@@ -1,6 +1,7 @@
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { LinearTransition } from 'react-native-reanimated';
 import ReorderableList, {
   reorderItems,
   type ReorderableListReorderEvent,
@@ -20,6 +21,7 @@ import {
   FontWeight,
   LineHeight,
   MaxContentWidth,
+  Motion,
   Radius,
   Sizes,
   Spacing,
@@ -190,6 +192,12 @@ export function NotesList({
           keyExtractor={(item) => String(item.id)}
           onReorder={handleReorder}
           dragEnabled={list.reordering}
+          // Silinen satırın bıraktığı boşluk kapanırken liste kayarak
+          // toparlanıyor. Sıralama modunda kapalı: sürükleme animasyonuyla
+          // çakışıyor.
+          itemLayoutAnimation={
+            list.reordering ? undefined : LinearTransition.duration(Motion.rowSettle)
+          }
           contentContainerStyle={[
             styles.list,
             { paddingBottom: insets.bottom + TabBarHeight + Sizes.fab + Spacing.four },

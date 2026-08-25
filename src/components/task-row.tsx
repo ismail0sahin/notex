@@ -10,6 +10,7 @@ import { FontSize, LineHeight, Radius, Sizes, Spacing } from '@/constants/theme'
 import type { PlanKind, Task } from '@/db';
 import type { ListMode } from '@/hooks/use-list-mode';
 import { useTheme } from '@/hooks/use-theme';
+import { held } from '@/lib/haptics';
 
 /** Çizelge satırında saat sütunu. Boşken --:-- görünür ve dokunulunca seçici açar. */
 function TimeCell({
@@ -85,6 +86,7 @@ export function TaskRow({
   };
 
   const handleLongPress = () => {
+    held();
     if (mode === 'reorder') drag();
     else if (normal) onStartSelect();
     else onToggle();

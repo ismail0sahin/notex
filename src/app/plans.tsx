@@ -1,6 +1,7 @@
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { LinearTransition } from 'react-native-reanimated';
 import ReorderableList, {
   reorderItems,
   type ReorderableListReorderEvent,
@@ -16,7 +17,7 @@ import { SlidePanel } from '@/components/slide-panel';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Strings } from '@/constants/strings';
-import { MaxContentWidth, Radius, Sizes, Spacing, TabBarHeight } from '@/constants/theme';
+import { MaxContentWidth, Motion, Radius, Sizes, Spacing, TabBarHeight } from '@/constants/theme';
 import {
   createPlan,
   deletePlan,
@@ -150,6 +151,12 @@ export default function PlansScreen() {
           keyExtractor={(item) => String(item.id)}
           onReorder={handleReorder}
           dragEnabled={list.reordering}
+          // Silinen satırın bıraktığı boşluk kapanırken liste kayarak
+          // toparlanıyor. Sıralama modunda kapalı: sürükleme animasyonuyla
+          // çakışıyor.
+          itemLayoutAnimation={
+            list.reordering ? undefined : LinearTransition.duration(Motion.rowSettle)
+          }
           contentContainerStyle={[
             styles.list,
             { paddingBottom: insets.bottom + TabBarHeight + Sizes.fab + Spacing.four },

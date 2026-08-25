@@ -105,6 +105,16 @@ export const Strings = {
     darkDescription: 'Her zaman koyu tema',
   },
 
+  accent: {
+    title: 'Renk',
+    description: 'İşaretleyici ve düğme rengi',
+    terracotta: 'Kiremit',
+    olive: 'Zeytin',
+    indigo: 'Mürekkep',
+    plum: 'Erik',
+    teal: 'Deniz',
+  },
+
   modes: {
     reorder: 'Sırala',
     reorderDescription: 'Basılı tutup taşı',

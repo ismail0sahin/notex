@@ -40,13 +40,21 @@ satırı düzenlemeye açar; boşaltıp çıkarsan satır silinir. Satırları s
 sıralamak için plan içindeki `⋮` menüsü kullanılır — listelerdeki mantığın aynısı.
 
 Tamamlanan görev ve tümü biten planlarda yazı değişmez, satırın zemini değişir —
-aksan renginin zemine karışmış hâli. Planın tamamlanma oranı görevlerinden hesaplanır; listede
+aksan renginin zemine karışmış hâli. İşaretleyici anında dolmuyor, tik hafif bir
+taşmayla yerine oturuyor; alışveriş listelerinde tiklenen satır alta *kayarak*
+iniyor. Uzun basış ve tik kısa bir titreşimle karşılık veriyor. Planın tamamlanma oranı görevlerinden hesaplanır; listede
 `3/5 görev tamam` ve ince bir ilerleme çubuğu görünür. Çizelgelerde liste
 satırında günün kapsamı da yazar (`09:00 – 17:30`).
 
-**Görünüm** — `⋮` menüsündeki üçüncü madde: Sistem, Açık, Koyu. Seçim anında
-uygulanır ve cihazda saklanır (`settings` tablosu), uygulamayı kapatıp açınca
-korunur. Varsayılan "Sistem", yani cihazın ayarını izler.
+**Görünüm ve renk** — `⋮` menüsünün altındaki iki madde. *Görünüm*: Sistem, Açık,
+Koyu — varsayılan "Sistem", yani cihazın ayarını izler. *Renk*: işaretleyicinin,
+`+` düğmesinin ve seçim çerçevesinin rengi; Kiremit, Zeytin, Mürekkep, Erik ve
+Deniz arasından. Zemin ve yazı renkleri değişmez, yalnızca aksan değişir. İkisi de
+seçim anında uygulanır ve cihazda saklanır (`settings` tablosu), uygulamayı
+kapatıp açınca korunur.
+
+Tamamlanan satırın zemini de seçilen aksandan türüyor, o yüzden renk değiştirince
+liste bütün olarak birlikte dönüyor.
 
 **Modlar** — her listenin sağ üstünde bir `⋮` düğmesi var: "Sırala" ve "Seç".
 
@@ -178,6 +186,7 @@ gerekiyor ve kaynak kod Expo sunucularına yükleniyor.
 | `src/constants/theme.ts` | Bütün görsel tercihler: renk, boşluk, ölçü, süre |
 | `src/constants/strings.ts` | Arayüzde geçen bütün metinler |
 | `src/lib/date.ts` | Yerel tarih ve `HH:MM` saat yardımcıları |
+| `src/lib/haptics.ts` | Dokunsal geri bildirim; `expo-haptics` yalnızca burada |
 | `src/lib/note.ts` | Boş başlığı notun ilk satırından türetme |
 | `scripts/make-icons.py` | İkon ve açılış görseli üretici |
 
@@ -201,10 +210,11 @@ Bütün arayüz tasarımı `src/constants/` altındaki iki dosyada. Kural basit:
 **kelimeler `strings.ts`'te, görsel her şey `theme.ts`'te.** Bileşenlerin içinde
 düz metin, renk kodu ya da çıplak ölçü yok.
 
-`theme.ts` — palet "Kağıt" (kremli zemin, toprak tonu aksan), açık ve koyu tema
-için ayrı: `Colors`. Yanında `Spacing`, `FontSize`, `LineHeight`, `FontWeight`,
-`Radius`, `Sizes`, `Motion` ve `Glyphs`. Paleti ya da ölçüleri değiştirmek için
-tek dosya yeter.
+`theme.ts` — palet "Kağıt" (kremli zemin), açık ve koyu tema için ayrı. Renk iki
+parçadan kuruluyor: zemin/yazı/çerçeve sabit, aksan kullanıcının seçimi
+(`Accents`); `resolveColors()` ikisini birleştiriyor. Yanında `Spacing`,
+`FontSize`, `LineHeight`, `FontWeight`, `Radius`, `Sizes`, `Motion` ve `Glyphs`.
+Paleti ya da ölçüleri değiştirmek için tek dosya yeter.
 
 `strings.ts` — ekranda geçen her kelime. Sayı içeren cümleler fonksiyon
 (`Strings.plans.running(3)`), böylece dilbilgisi de tek yerde kalıyor.

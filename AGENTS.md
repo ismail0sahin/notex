@@ -16,14 +16,16 @@ Arayüz metinleri Türkçe.
   yoksa kurulu uygulamalardaki veri bozulur.
 - `src/app/_layout.tsx` — `SQLiteProvider` burada; ekranlar `useSQLiteContext()` kullanır.
   Onun içinde `AppThemeProvider` (`src/hooks/use-theme.tsx`) var: tema tercihini
-  `settings` tablosundan okuyup uygulamaya dağıtıyor. Sıra önemli — sağlayıcı
-  tercihi veritabanından okuduğu için `SQLiteProvider`'ın içinde olmak zorunda.
-  Bileşenler renk için `useTheme()`, tercihi okumak/değiştirmek için
-  `useThemePreference()` kullanır; `useColorScheme()` doğrudan çağrılmaz, yoksa
-  kullanıcının seçimi atlanır.
-- `src/components/option-sheet.tsx` — ortada açılan seçim sayfası. Plan türü ve
-  görünüm tercihi ikisi de bunu kullanıyor; yeni bir seçim gerekirse üçüncü bir
-  sayfa yazmak yerine buna bir çağrı eklenir.
+  ve aksan rengini `settings` tablosundan okuyup uygulamaya dağıtıyor. Sıra
+  önemli — sağlayıcı tercihleri veritabanından okuduğu için `SQLiteProvider`'ın
+  içinde olmak zorunda. Bileşenler renk için `useTheme()`, tercihleri
+  okumak/değiştirmek için `useThemePreference()` / `useAccentPreference()`
+  kullanır; `useColorScheme()` doğrudan çağrılmaz, yoksa kullanıcının seçimi
+  atlanır.
+- `src/components/option-sheet.tsx` — ortada açılan seçim sayfası. Plan türü,
+  görünüm ve aksan rengi üçü de bunu kullanıyor; yeni bir seçim gerekirse
+  dördüncü bir sayfa yazmak yerine buna bir çağrı eklenir. `description` isteğe
+  bağlı, `swatch` verilirse kartın sağına o renkte bir daire çizilir.
 - Tema tercihi native açılış ekranını etkilemez: `app.json`'daki açılış renkleri
   cihaz ayarını izler, SQLite'taki tercihi okuyamaz. Cihaz açık temadayken
   uygulamayı koyuya sabitlerseniz açılışta krem bir kare görünür.
@@ -83,14 +85,28 @@ Arayüz metinleri Türkçe.
   renk kodu ya da çıplak ölçü bırakılmaz; oraya token eklenir.
   - `strings.ts` — ekranda geçen her kelime. Sayı içeren cümleler fonksiyon
     (`Strings.notes.selected(3)`), böylece dilbilgisi de tek yerde kalıyor.
-  - `theme.ts` — `Colors`, `Spacing`, `FontSize`, `LineHeight`, `FontWeight`,
-    `Radius`, `Sizes`, `Motion`, `Glyphs`, `TabBarHeight`, `MaxContentWidth`.
-- Tamamlanan öğede yazı değişmez, **kutucuğun zemini** değişir:
-  `Colors.backgroundDone` (aksanın zemine karışmış hâli). Üstünü çizmek metni
-  okunmaz yapıyordu, yazıyı soluklaştırmak da yetersiz kalıyordu.
-- Bütün kartların duran hâlinde `Colors.borderSubtle` çerçevesi var; seçilince
+  - `theme.ts` — `Accents`, `resolveColors`, `Spacing`, `FontSize`, `LineHeight`,
+    `FontWeight`, `Radius`, `Sizes`, `Motion`, `Glyphs`, `TabBarHeight`,
+    `MaxContentWidth`.
+- Renk iki parçadan kuruluyor: `Base` (zemin, yazı, çerçeve — dışa açılmıyor) ve
+  kullanıcının seçtiği `Accents[ad]`. `resolveColors(scheme, accent)` ikisini
+  birleştiriyor, `useTheme()` sonucu döndürüyor. Bileşenler bu ayrımı görmez.
+  Yeni aksan eklerken `backgroundDone` elle seçilmez: aksanın zemine karışmış
+  hâli (açıkta %12, koyuda %22), yoksa tamamlanan satır ya kaybolur ya bağırır.
+- Tamamlanan öğede yazı değişmez, **kutucuğun zemini** değişir: `backgroundDone`.
+  Üstünü çizmek metni okunmaz yapıyordu, yazıyı soluklaştırmak da yetersizdi.
+- Bütün kartların duran hâlinde `borderSubtle` çerçevesi var; seçilince
   `accent`'e dönüyor. Çerçeve her zaman duruyor (eskiden şeffaftı), yoksa seçim
   anında satır yükseklikleri oynuyor.
+- Dokunsal geri bildirim `src/lib/haptics.ts` üzerinden: `tapped()` (işaretleyici)
+  ve `held()` (uzun basış — seçim ya da sürükleme başlangıcı). `expo-haptics`
+  bileşenlerin içinden doğrudan çağrılmaz, hangi hareketin ne kadar titreteceği
+  tek yerde durur. Çağrılar ateşle-unut: cihazda motor yoksa hata yutuluyor.
+- Listelerde satır hareketi `ReorderableList`'in `itemLayoutAnimation`'ıyla
+  (`LinearTransition`, `Motion.rowSettle`). **Sıralama modunda kapatılıyor** —
+  kütüphanenin kendi sürükleme animasyonuyla aynı anda çalışınca satır iki kez
+  oynuyor. `sorted` planlarda tiklenen satırın alta inişini bu animasyon
+  taşıyor; notlarda ve planlarda silinen satırın boşluğunu kapatıyor.
 - Sekme ikonları tek renkli maske; renk `NativeTabs`'in `iconColor={{default,
   selected}}` prop'undan geliyor, etiket rengi de `labelStyle={{default,
   selected}}`'dan. İkisi de temanın `textSecondary` / `accent` / `text`

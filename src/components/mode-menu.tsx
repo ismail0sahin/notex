@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AccentSheet, accentLabel } from '@/components/accent-sheet';
 import { AppearanceSheet, appearanceLabel } from '@/components/appearance-sheet';
 import { ThemedText } from '@/components/themed-text';
 import { Strings } from '@/constants/strings';
 import { Radius, Sizes, Spacing } from '@/constants/theme';
-import { useTheme, useThemePreference } from '@/hooks/use-theme';
+import { useAccentPreference, useTheme, useThemePreference } from '@/hooks/use-theme';
 
 /** Üç nokta. İkon paketi kurmamak için View'lerle çizili. */
 function DotsGlyph({ color }: { color: string }) {
@@ -24,7 +25,7 @@ function DotsGlyph({ color }: { color: string }) {
  *
  * Modlar menüden açıkça seçiliyor, çünkü ikisi de uzun basışı kullanıyor —
  * hangisinin devrede olduğu kullanıcının kararı olmalı, tahmin edilmemeli.
- * Görünüm ayrı bir ayar ekranı hak etmeyecek kadar küçük, o yüzden burada.
+ * Görünüm ve renk ayrı bir ayar ekranı hak etmeyecek kadar küçük, o yüzden burada.
  */
 export function ModeMenu({
   onReorder,
@@ -38,8 +39,10 @@ export function ModeMenu({
 }) {
   const theme = useTheme();
   const { preference } = useThemePreference();
+  const { accent } = useAccentPreference();
   const [open, setOpen] = useState(false);
   const [appearanceOpen, setAppearanceOpen] = useState(false);
+  const [accentOpen, setAccentOpen] = useState(false);
 
   function pick(action: () => void) {
     setOpen(false);
@@ -105,12 +108,25 @@ export function ModeMenu({
                   {appearanceLabel(preference)}
                 </ThemedText>
               </Pressable>
+
+              <View style={[styles.divider, { backgroundColor: theme.background }]} />
+
+              <Pressable onPress={() => pick(() => setAccentOpen(true))} style={item}>
+                <View style={styles.accentRow}>
+                  <ThemedText>{Strings.accent.title}</ThemedText>
+                  <View style={[styles.accentDot, { backgroundColor: theme.accent }]} />
+                </View>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {accentLabel(accent)}
+                </ThemedText>
+              </Pressable>
             </View>
           </SafeAreaView>
         </Pressable>
       </Modal>
 
       <AppearanceSheet visible={appearanceOpen} onClose={() => setAppearanceOpen(false)} />
+      <AccentSheet visible={accentOpen} onClose={() => setAccentOpen(false)} />
     </>
   );
 }
@@ -147,5 +163,15 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: Sizes.hairline,
+  },
+  accentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  accentDot: {
+    width: Sizes.checkbox / 2,
+    height: Sizes.checkbox / 2,
+    borderRadius: Sizes.checkbox / 4,
   },
 });

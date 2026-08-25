@@ -8,6 +8,7 @@ import { Radius, Sizes, Spacing } from '@/constants/theme';
 import type { PlanWithProgress } from '@/db';
 import type { ListMode } from '@/hooks/use-list-mode';
 import { useTheme } from '@/hooks/use-theme';
+import { held } from '@/lib/haptics';
 
 export function PlanRow({
   plan,
@@ -52,6 +53,7 @@ export function PlanRow({
   };
 
   const handleLongPress = () => {
+    held();
     if (mode === 'reorder') drag();
     else if (mode === 'normal') onStartSelect();
     else onToggle();
