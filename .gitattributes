@@ -2,6 +2,9 @@
 # Windows/macOS arasında sahte diff çıkmasını önler.
 * text=auto eol=lf
 
+# Batch dosyalari CRLF ister; LF ile etiketler ve bloklar bozulabiliyor.
+*.cmd text eol=crlf
+
 *.png binary
 *.jpg binary
 *.ttf binary

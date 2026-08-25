@@ -135,6 +135,11 @@ cd android
 .\gradlew assembleRelease
 ```
 
+Ya da proje kökündeki **`derle.cmd`**'ye çift tıkla — aynı adımları yapıyor,
+`android/` ya da `local.properties` eksikse önce onları üretiyor, sonunda APK'nın
+yerini ve boyutunu yazıp klasörü açmayı öneriyor. Gradle seçenekleri doğrudan
+aktarılıyor: `derle.cmd -x lintVitalAnalyzeRelease` gibi.
+
 Çıktı: `android/app/build/outputs/apk/release/app-release.apk` (~79 MB).
 Telefona kopyalayıp kurmak yeterli. Lint araya girip keserse komutun sonuna
 `-x lintVitalAnalyzeRelease` eklenir.
@@ -189,6 +194,7 @@ gerekiyor ve kaynak kod Expo sunucularına yükleniyor.
 | `src/lib/haptics.ts` | Dokunsal geri bildirim; `expo-haptics` yalnızca burada |
 | `src/lib/note.ts` | Boş başlığı notun ilk satırından türetme |
 | `scripts/make-icons.py` | İkon ve açılış görseli üretici |
+| `derle.cmd` | Çift tıklanır APK derleme; JDK, prebuild ve Gradle'ı sırayla yürütür |
 
 Ekran geçişleri `Modal` ile yapılıyor, ayrı route açılmıyor — `NativeTabs` altında
 sekme olmayan route'lar sorun çıkarıyor.
