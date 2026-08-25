@@ -12,6 +12,7 @@ import { Fab } from '@/components/fab';
 import { ModeMenu } from '@/components/mode-menu';
 import { PlanDetail } from '@/components/plan-detail';
 import { PlanRow } from '@/components/plan-row';
+import { SearchButton, SearchField } from '@/components/search-field';
 import { OptionSheet, type SheetOption } from '@/components/option-sheet';
 import { SlidePanel } from '@/components/slide-panel';
 import { ThemedText } from '@/components/themed-text';
@@ -31,6 +32,7 @@ import {
 } from '@/db';
 import { useListMode } from '@/hooks/use-list-mode';
 import { useTheme } from '@/hooks/use-theme';
+import { matches } from '@/lib/search';
 
 /** + basıldığında sorulan plan türleri. */
 const KIND_OPTIONS: readonly SheetOption<PlanKind>[] = [
@@ -59,6 +61,8 @@ export default function PlansScreen() {
   const [plans, setPlans] = useState<PlanWithProgress[]>([]);
   const [openPlanId, setOpenPlanId] = useState<number | null>(null);
   const [askingKind, setAskingKind] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const [query, setQuery] = useState('');
 
   const reload = useCallback(async () => {
     setPlans(await listPlans(db));
@@ -117,9 +121,31 @@ export default function PlansScreen() {
     (plan) => plan.task_count === 0 || plan.done_count < plan.task_count
   ).length;
 
+  // Uzun basışla seçim moduna girilirse başlık seçim eylemlerine dönüyor ama
+  // süzme sürüyor: bulunan planı oracıkta seçip silmek mümkün.
+  const searchOpen = searching && list.mode === 'normal';
+  const visible = query ? plans.filter((plan) => matches(plan.title, query)) : plans;
+
+  /**
+   * Arama açılırken mod sıfırlanıyor. Süzülmüş bir listede sıralama tehlikeli:
+   * `writePositions` yalnızca görünen satırları 0..n-1 diye yazar, gizli kalan
+   * satırların sırası bozulurdu. Arama açıkken ⋮ de görünmüyor, yani sıralama
+   * moduna hiç girilemiyor.
+   */
+  function openSearch() {
+    list.reset();
+    setSearching(true);
+  }
+
+  function closeSearch() {
+    setSearching(false);
+    setQuery('');
+  }
+
   function statusLine() {
     if (list.selecting) return Strings.plans.selected(list.count);
     if (list.reordering) return Strings.modes.reorderHintList;
+    if (query) return Strings.search.results(visible.length);
     if (plans.length === 0) return Strings.plans.none;
     return Strings.plans.running(activeCount);
   }
@@ -128,16 +154,28 @@ export default function PlansScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <View style={styles.header}>
-          <ThemedText type="subtitle">{Strings.plans.title}</ThemedText>
-          {list.mode === 'normal' ? (
-            <ModeMenu onReorder={list.startReorder} onSelect={() => list.startSelect()} />
+          {searchOpen ? (
+            <SearchField onChange={setQuery} onClose={closeSearch} />
           ) : (
+            <ThemedText type="subtitle" style={styles.title} numberOfLines={1}>
+              {Strings.plans.title}
+            </ThemedText>
+          )}
+
+          {list.mode === 'normal' && !searchOpen ? (
+            <View style={styles.headerActions}>
+              <SearchButton onPress={openSearch} />
+              <ModeMenu onReorder={list.startReorder} onSelect={() => list.startSelect()} />
+            </View>
+          ) : null}
+
+          {list.mode !== 'normal' ? (
             <Pressable onPress={list.reset} hitSlop={Spacing.three}>
               <ThemedText themeColor="textSecondary">
                 {list.selecting ? Strings.common.cancel : Strings.common.done}
               </ThemedText>
             </Pressable>
-          )}
+          ) : null}
         </View>
 
         <ThemedText type="small" themeColor="textSecondary">
@@ -147,7 +185,7 @@ export default function PlansScreen() {
         <View style={[styles.headerRule, { backgroundColor: theme.borderSubtle }]} />
 
         <ReorderableList
-          data={plans}
+          data={visible}
           keyExtractor={(item) => String(item.id)}
           onReorder={handleReorder}
           dragEnabled={list.reordering}
@@ -164,7 +202,7 @@ export default function PlansScreen() {
           ListEmptyComponent={
             <View style={[styles.empty, { borderColor: theme.borderSubtle }]}>
               <ThemedText type="small" themeColor="textSecondary" style={styles.emptyText}>
-                {Strings.plans.empty}
+                {query ? Strings.search.empty : Strings.plans.empty}
               </ThemedText>
             </View>
           }
@@ -220,6 +258,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: Spacing.three,
+  },
+  title: {
+    flex: 1,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.four,
   },
   list: {
     paddingTop: Spacing.two,

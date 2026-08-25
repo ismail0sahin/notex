@@ -105,6 +105,12 @@ export const Strings = {
     darkDescription: 'Her zaman koyu tema',
   },
 
+  search: {
+    placeholder: 'Ara',
+    empty: 'Eşleşen bir şey yok',
+    results: (count: number) => (count === 1 ? '1 sonuç' : `${count} sonuç`),
+  },
+
   accent: {
     title: 'Renk',
     description: 'İşaretleyici ve düğme rengi',
@@ -132,6 +138,8 @@ export const Strings = {
     add: 'Yeni ekle',
     deleteSelected: 'Seçilenleri sil',
     listMenu: 'Liste menüsü',
+    search: 'Ara',
+    closeSearch: 'Aramayı kapat',
     back: 'Geri',
     startTime: 'Başlangıç saati',
     endTime: 'Bitiş saati',

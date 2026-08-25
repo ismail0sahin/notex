@@ -12,13 +12,14 @@ import { BackButton } from '@/components/back-button';
 import { Fab } from '@/components/fab';
 import { ModeMenu } from '@/components/mode-menu';
 import { NoteRow } from '@/components/note-row';
+import { SearchButton, SearchField } from '@/components/search-field';
 import { SlidePanel } from '@/components/slide-panel';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Strings } from '@/constants/strings';
 import {
   FontSize,
-  FontWeight,
+  Fonts,
   LineHeight,
   MaxContentWidth,
   Motion,
@@ -38,6 +39,7 @@ import {
 } from '@/db';
 import { useListMode } from '@/hooks/use-list-mode';
 import { useTheme } from '@/hooks/use-theme';
+import { matches } from '@/lib/search';
 
 type Editing = Note | 'new' | null;
 
@@ -63,6 +65,8 @@ export function NotesList({
   const insets = useSafeAreaInsets();
   const [notes, setNotes] = useState<Note[]>([]);
   const [editing, setEditing] = useState<Editing>(null);
+  const [searching, setSearching] = useState(false);
+  const [query, setQuery] = useState('');
 
   // Alanlar kontrolsüz: yazılan metin state'e uğramıyor, ref'te birikiyor.
   // Her tuşta value'yu geri yazmak Android klavyesinde ü/ğ/ş gibi harfleri düşürüyor.
@@ -109,6 +113,31 @@ export function NotesList({
     reload();
   }
 
+  // Uzun basışla seçim moduna girilirse başlık seçim eylemlerine dönüyor ama
+  // süzme sürüyor: bulunan notu oracıkta seçip silmek mümkün.
+  const searchOpen = searching && list.mode === 'normal';
+
+  // Başlık ve gövde birlikte aranıyor: başlık boş bırakılabildiği için notu
+  // yalnızca içeriğinden bulmak gerekiyor.
+  const visible = query ? notes.filter((note) => matches(`${note.title}
+${note.body}`, query)) : notes;
+
+  /**
+   * Arama açılırken mod sıfırlanıyor. Süzülmüş bir listede sıralama tehlikeli:
+   * `writePositions` yalnızca görünen satırları 0..n-1 diye yazar, gizli kalan
+   * satırların sırası bozulurdu. Arama açıkken ⋮ de görünmüyor, yani sıralama
+   * moduna hiç girilemiyor.
+   */
+  function openSearch() {
+    list.reset();
+    setSearching(true);
+  }
+
+  function closeSearch() {
+    setSearching(false);
+    setQuery('');
+  }
+
   /** Ekranda hemen uygula, sonra sırayı veritabanına yaz. */
   async function handleReorder({ from, to }: ReorderableListReorderEvent) {
     const next = reorderItems(notes, from, to);
@@ -144,6 +173,7 @@ export function NotesList({
   function statusLine() {
     if (list.selecting) return Strings.notes.selected(list.count);
     if (list.reordering) return Strings.modes.reorderHintList;
+    if (query) return Strings.search.results(visible.length);
     return hidden ? Strings.hidden.count(notes.length) : Strings.notes.count(notes.length);
   }
 
@@ -152,17 +182,27 @@ export function NotesList({
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <View style={styles.header}>
           {onBack ? <BackButton onPress={onBack} /> : null}
-          <ThemedText type="subtitle" style={styles.title} numberOfLines={1}>
-            {title}
-          </ThemedText>
 
-          {list.mode === 'normal' ? (
-            <ModeMenu
-              onReorder={list.startReorder}
-              onSelect={() => list.startSelect()}
-              extra={menuExtra}
-            />
+          {searchOpen ? (
+            <SearchField onChange={setQuery} onClose={closeSearch} />
           ) : (
+            <ThemedText type="subtitle" style={styles.title} numberOfLines={1}>
+              {title}
+            </ThemedText>
+          )}
+
+          {list.mode === 'normal' && !searchOpen ? (
+            <View style={styles.headerActions}>
+              <SearchButton onPress={openSearch} />
+              <ModeMenu
+                onReorder={list.startReorder}
+                onSelect={() => list.startSelect()}
+                extra={menuExtra}
+              />
+            </View>
+          ) : null}
+
+          {list.mode !== 'normal' ? (
             <View style={styles.headerActions}>
               {list.selecting && list.count > 0 ? (
                 <Pressable onPress={moveSelected} hitSlop={Spacing.three}>
@@ -178,7 +218,7 @@ export function NotesList({
                 </ThemedText>
               </Pressable>
             </View>
-          )}
+          ) : null}
         </View>
 
         <ThemedText type="small" themeColor="textSecondary">
@@ -188,7 +228,7 @@ export function NotesList({
         <View style={[styles.headerRule, { backgroundColor: theme.borderSubtle }]} />
 
         <ReorderableList
-          data={notes}
+          data={visible}
           keyExtractor={(item) => String(item.id)}
           onReorder={handleReorder}
           dragEnabled={list.reordering}
@@ -205,7 +245,11 @@ export function NotesList({
           ListEmptyComponent={
             <View style={[styles.empty, { borderColor: theme.borderSubtle }]}>
               <ThemedText type="small" themeColor="textSecondary" style={styles.emptyText}>
-                {hidden ? Strings.hidden.empty : Strings.notes.empty}
+                {query
+                  ? Strings.search.empty
+                  : hidden
+                    ? Strings.hidden.empty
+                    : Strings.notes.empty}
               </ThemedText>
             </View>
           }
@@ -319,11 +363,12 @@ const styles = StyleSheet.create({
   titleInput: {
     fontSize: FontSize.title,
     lineHeight: LineHeight.title,
-    fontWeight: FontWeight.heading,
+    fontFamily: Fonts.heading,
   },
+  // Gövde sistem yazı tipinde ve biraz ferah: uzun metin burada okunuyor.
   bodyInput: {
     flex: 1,
     fontSize: FontSize.body,
-    lineHeight: LineHeight.body,
+    lineHeight: LineHeight.reading,
   },
 });

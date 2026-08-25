@@ -100,6 +100,21 @@ export const Spacing = {
   six: 64,
 } as const;
 
+/**
+ * Başlıklarda kullanılan yazı tipi. Gövde, satırlar ve arayüz sistem yazı
+ * tipinde kalıyor: uzun metinde ve klavye ile en güvenli olan o.
+ *
+ * Ad `_layout.tsx`'te `useFonts`'a verilen anahtarla birebir aynı olmalı.
+ * Yükleme çalışma anında yapılıyor, native olarak gömülmüyor — gömülseydi
+ * Expo Go'da font bulunamaz, geliştirmeyle gerçek derleme ayrışırdı.
+ *
+ * Lora'da `✓` ve `←` yok; onlar `Glyphs` üzerinden sistem yazı tipiyle
+ * çiziliyor, bu yüzden sorun çıkmıyor.
+ */
+export const Fonts = {
+  heading: 'Lora-SemiBold',
+} as const;
+
 export const FontSize = {
   /** Yardımcı metin, sütun başlıkları, sayaçlar. */
   small: 14,
@@ -120,18 +135,21 @@ export const FontSize = {
 export const LineHeight = {
   small: 20,
   body: 24,
+  /** Not gövdesi. Satır satır okunan tek yer, gövdeden biraz daha ferah. */
+  reading: 28,
   title: 30,
   back: 44,
   screenTitle: 44,
   fab: 32,
 } as const;
 
-/** İki ağırlık yeter: normal metin ve vurgulu metin. */
+/**
+ * İki ağırlık yeter: normal metin ve vurgulu metin. Başlıklar ağırlık
+ * kullanmıyor, `Fonts.heading` zaten SemiBold bir dosya.
+ */
 export const FontWeight = {
   regular: '500',
   bold: '700',
-  /** Başlıklar ve büyük yazılar. */
-  heading: '600',
 } as const;
 
 export const Radius = {
@@ -163,6 +181,8 @@ export const Sizes = {
   patternDot: 22,
   /** Renk seçim kartındaki örnek dairenin çapı. */
   swatch: 28,
+  /** Büyüteç simgesinin mercek çapı; sapı buradan türüyor. */
+  searchLens: 13,
   /** Başlık altındaki ince ayrım çizgisi. */
   hairline: 1,
 } as const;
@@ -197,6 +217,7 @@ export const Glyphs = {
   check: '✓',
   add: '+',
   back: '←',
+  close: '✕',
 } as const;
 
 export const MaxContentWidth = 800;

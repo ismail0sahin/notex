@@ -56,6 +56,14 @@ kapatıp açınca korunur.
 Tamamlanan satırın zemini de seçilen aksandan türüyor, o yüzden renk değiştirince
 liste bütün olarak birlikte dönüyor.
 
+**Arama** — listelerin sağ üstündeki büyüteç. Notlarda başlık *ve* gövde
+aranıyor (başlık boş bırakılabildiği için notu yalnızca içeriğinden bulmak
+gerekiyor), planlarda plan adı. Arama Türkçeye göre yapılıyor: büyük/küçük harf
+farkı yok ve işaretler düşüyor, yani "sut" yazınca "Süt" de geliyor — İngilizce
+klavyeyle arama yapmak işe yarar. Arama açıkken sıralama moduna girilemez;
+süzülmüş bir listede satır taşımak görünmeyenlerin sırasını bozardı. Uzun basışla
+seçim ise açık, bulduğun satırı oracıkta silebilirsin.
+
 **Modlar** — her listenin sağ üstünde bir `⋮` düğmesi var: "Sırala" ve "Seç".
 
 *Sıralama modunda* satırı basılı tutup yukarı aşağı taşıyorsun; sıra cihazda
@@ -192,6 +200,7 @@ gerekiyor ve kaynak kod Expo sunucularına yükleniyor.
 | `src/constants/strings.ts` | Arayüzde geçen bütün metinler |
 | `src/lib/date.ts` | Yerel tarih ve `HH:MM` saat yardımcıları |
 | `src/lib/haptics.ts` | Dokunsal geri bildirim; `expo-haptics` yalnızca burada |
+| `src/lib/search.ts` | Türkçeye göre arama eşleşmesi |
 | `src/lib/note.ts` | Boş başlığı notun ilk satırından türetme |
 | `scripts/make-icons.py` | İkon ve açılış görseli üretici |
 | `derle.cmd` | Çift tıklanır APK derleme; JDK, prebuild ve Gradle'ı sırayla yürütür |
@@ -221,6 +230,11 @@ parçadan kuruluyor: zemin/yazı/çerçeve sabit, aksan kullanıcının seçimi
 (`Accents`); `resolveColors()` ikisini birleştiriyor. Yanında `Spacing`,
 `FontSize`, `LineHeight`, `FontWeight`, `Radius`, `Sizes`, `Motion` ve `Glyphs`.
 Paleti ya da ölçüleri değiştirmek için tek dosya yeter.
+
+Başlıklar Lora SemiBold; gövde, satırlar ve arayüz sistem yazı tipinde kalıyor —
+uzun metinde ve klavyeyle en güvenli olan o. Font uygulama açılırken yükleniyor,
+native olarak gömülmüyor: gömülseydi Expo Go'da bulunamaz, geliştirmeyle gerçek
+derleme ayrışırdı. Lisansı `assets/fonts/OFL.txt` içinde.
 
 `strings.ts` — ekranda geçen her kelime. Sayı içeren cümleler fonksiyon
 (`Strings.plans.running(3)`), böylece dilbilgisi de tek yerde kalıyor.

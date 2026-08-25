@@ -21,7 +21,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Strings } from '@/constants/strings';
 import {
   FontSize,
-  FontWeight,
+  Fonts,
   Glyphs,
   LineHeight,
   MaxContentWidth,
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
   titleInput: {
     fontSize: FontSize.title,
     lineHeight: LineHeight.title,
-    fontWeight: FontWeight.heading,
+    fontFamily: Fonts.heading,
     paddingTop: Spacing.two,
     paddingBottom: Spacing.three,
   },

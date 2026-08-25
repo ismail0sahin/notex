@@ -1,6 +1,6 @@
 import { StyleSheet, Text, type TextProps } from 'react-native';
 
-import { FontSize, FontWeight, LineHeight, ThemeColor } from '@/constants/theme';
+import { FontSize, Fonts, FontWeight, LineHeight, ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export type ThemedTextProps = TextProps & {
@@ -42,9 +42,11 @@ const styles = StyleSheet.create({
     lineHeight: LineHeight.small,
     fontWeight: FontWeight.bold,
   },
+  // Serif yalnızca başlıklarda. fontWeight verilmiyor: dosya zaten SemiBold,
+  // üstüne ağırlık istemek Android'de sahte kalınlaştırmaya gidiyor.
   subtitle: {
     fontSize: FontSize.screenTitle,
     lineHeight: LineHeight.screenTitle,
-    fontWeight: FontWeight.heading,
+    fontFamily: Fonts.heading,
   },
 });

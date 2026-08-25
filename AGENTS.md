@@ -67,6 +67,17 @@ Arayüz metinleri Türkçe.
   `@react-native-community/datetimepicker` zaten kurulu, `mode="date"` ile gerçek
   bir tarih seçici bağlanabilir.
 - `src/components/app-tabs.tsx` — sekmeler (`NativeTabs`). Sekme adı dosya adıyla eşleşmeli.
+- Arama `src/lib/search.ts` üzerinden ve **SQL'de değil JS'te**: SQLite'ın
+  `LIKE`/`lower()`'ı yalnızca ASCII biliyor, "İstanbul" ile "istanbul"
+  eşleşmiyor. `fold()` Türkçe kurallarıyla küçültüp işaretleri düşürüyor
+  ('I'→'ı', 'İ'→'i', ikisi de 'i'), böylece "sut" da "Süt"ü buluyor. Liste
+  birkaç yüz satır, süzmenin maliyeti yok.
+- Arama açıkken ⋮ gizleniyor, yani **sıralama moduna girilemiyor**. Bu kasıtlı:
+  `writePositions` yalnızca görünen satırları 0..n-1 diye yazar, süzülmüş bir
+  listede sıralamak gizli kalan satırların sırasını bozardı. Uzun basışla seçim
+  ise açık — süzülmüş listeden silmek güvenli, `deleteNotes` id ile çalışıyor.
+- Arama alanı da kontrolsüz: `value` geri yazılmıyor, metin yalnızca süzme için
+  state'e yansıyor. Diğer bütün alanlarla aynı sebep — Android klavyesi.
 - `src/hooks/use-list-mode.ts` — listelerin üç durumu: `normal`, `select`, `reorder`.
   Uzun basış moda göre farklı iş yapıyor (normalde seçim açar, sıralamada sürükler),
   o yüzden mod tek kaynaktan okunur. Yeni bir listeye bu davranış eklenecekse bu
@@ -85,9 +96,9 @@ Arayüz metinleri Türkçe.
   renk kodu ya da çıplak ölçü bırakılmaz; oraya token eklenir.
   - `strings.ts` — ekranda geçen her kelime. Sayı içeren cümleler fonksiyon
     (`Strings.notes.selected(3)`), böylece dilbilgisi de tek yerde kalıyor.
-  - `theme.ts` — `Accents`, `resolveColors`, `Spacing`, `FontSize`, `LineHeight`,
-    `FontWeight`, `Radius`, `Sizes`, `Motion`, `Glyphs`, `TabBarHeight`,
-    `MaxContentWidth`.
+  - `theme.ts` — `Accents`, `resolveColors`, `Fonts`, `Spacing`, `FontSize`,
+    `LineHeight`, `FontWeight`, `Radius`, `Sizes`, `Motion`, `Glyphs`,
+    `TabBarHeight`, `MaxContentWidth`.
 - Renk iki parçadan kuruluyor: `Base` (zemin, yazı, çerçeve — dışa açılmıyor) ve
   kullanıcının seçtiği `Accents[ad]`. `resolveColors(scheme, accent)` ikisini
   birleştiriyor, `useTheme()` sonucu döndürüyor. Bileşenler bu ayrımı görmez.
@@ -111,6 +122,16 @@ Arayüz metinleri Türkçe.
   selected}}` prop'undan geliyor, etiket rengi de `labelStyle={{default,
   selected}}`'dan. İkisi de temanın `textSecondary` / `accent` / `text`
   tonlarını kullanıyor, dolayısıyla koyu temada kendiliğinden açılıyor.
+- Başlıklar Lora SemiBold (`Fonts.heading`), gövde ve arayüz sistem yazı
+  tipinde. Font **çalışma anında** yükleniyor (`useFonts`, `_layout.tsx`),
+  `expo-font` eklentisiyle native olarak gömülmüyor: gömülseydi Expo Go'da
+  bulunamaz, geliştirmeyle gerçek derleme sekme ikonlarındaki gibi ayrışırdı.
+  Yüklenene kadar hiçbir şey render edilmiyor, açılış ekranı zaten duruyor.
+  Lora'da `✓` ve `←` yok — onlar `Glyphs` üzerinden sistem yazı tipiyle
+  çiziliyor, o yüzden sorun çıkmıyor. `assets/fonts/OFL.txt` lisans gereği
+  fontun yanında duruyor.
+- Başlıklara `fontWeight` verilmiyor: dosya zaten SemiBold, üstüne ağırlık
+  istemek Android'de sahte kalınlaştırmaya gidiyor.
 - İkon kaynağı ortama göre değişiyor ve bu **bilinçli**: geliştirmede `src`,
   gerçek derlemede `drawable`. Sebep `react-native-screens` 4.16'nın native
   kodu — release'te JS varlığını kaynak olarak yalnızca adı `_` ile başlıyorsa
