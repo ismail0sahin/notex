@@ -209,6 +209,19 @@ seçicisini `display="spinner"` olarak açıyor — alarm uygulamalarındaki gib
 aşağı dönen saat/dakika tekerleği. Elle "09:30" yazdırmak telefonda hataya davetiye; ayrıca
 seçicinin `neutralButton`'u "Temizle" olarak bağlı, yani girilen saat geri alınabilir.
 
+Seçici boş bir alana içinde bulunulan saatten değil, `pickerStart` sırasıyla
+açılıyor: alanın kendi değeri → bitiş seçiliyorsa aynı satırın başlangıcı → bu
+oturumda en son seçilen saat → listedeki en son dolu saat. Sebep pratik: bir
+satırın bitişi çoğunlukla sonrakinin başlangıcı oluyor, her seferinde tekerleği
+sıfırdan çevirmek gereksiz. En son seçilen saat `lastTimeRef`'te, kalıcı değil —
+plan kapanınca sıfırlanıyor.
+
+Çizelgede yeni satır **alta** ekleniyor (`createTask`'in `atEnd` parametresi),
+diğer iki türde başa. Çizelgede sıra kronolojik, sonradan eklenen satır günün
+sonuna gider. Satır ekranın dışında kalabildiği için liste büyüdüğünde sona
+kaydırılıyor; kaydırma `onContentSizeChange` içinde, `reloadTasks`'in hemen
+ardında değil — o anda içerik henüz ölçülmemiş oluyor.
+
 Çizelge satırları saate göre otomatik sıralanmıyor, `position` sırasında kalıyor.
 Otomatik sıralama elle taşımayla çatışıyor (aşağıdaki bölüm). Bu bilinçli bir
 tercih; değiştirilecekse sürüklemenin o tür için ne anlama geldiği yeniden düşünülmeli.
@@ -221,10 +234,11 @@ tarihe göre dizmek) kaldırıldı — elle taşınan bir sırayla bir arada ça
 kullanıcı bir satırı taşıdıktan sonra geri zıplıyordu.
 
 Yeni kayıt eklerken `position` sorgunun içinde hesaplanıyor: not, plan ve görev
-için `MIN(position) - 1` (başa). Böylece ekleme sırasında bütün satırların
-yeniden numaralanması gerekmiyor. Görevlerde başa eklemenin sebebi arayüz: yazma
-satırı plan içinde en üstte sabit duruyor, yazılan satırın onun hemen altında
-görünmesi gerekiyor.
+için `MIN(position) - 1` (başa), çizelge satırları için `MAX(position) + 1`
+(sona). Böylece ekleme sırasında bütün satırların yeniden numaralanması
+gerekmiyor. Görevlerde başa eklemenin sebebi arayüz: yazma satırı plan içinde en
+üstte sabit duruyor, yazılan satırın onun hemen altında görünmesi gerekiyor.
+Çizelgede ise sıra kronolojik olduğu için bu ters çevriliyor.
 
 Sürükleme bittiğinde `writePositions` sırayı 0..n-1 olarak tek işlemde yazıyor.
 

@@ -30,7 +30,11 @@ türde olacağını sorar:
   üstte toplanır; aralarında ince bir çizgi durur.
 - **Çizelge** — her satırda tik, görev adı, başlangıç ve bitiş saati. Saate
   dokunmak Android'in saat seçicisini açar (alarm tarzı dönen tekerlek);
-  "Temizle" ile saati boşaltabilirsin.
+  "Temizle" ile saati boşaltabilirsin. Boş bir alana seçici son seçtiğin saatten
+  açılıyor — bir satırın bitişi çoğunlukla sonrakinin başlangıcı olduğu için
+  tekerleği her seferinde sıfırdan çevirmek gerekmiyor. Yeni satır çizelgede
+  listenin **altına** ekleniyor, diğer iki türde üste: çizelgede sıra
+  kronolojik.
 
 Not ve plan sayfaları sağdan kayarak açılır, sol üstteki `←` ile kapanır.
 

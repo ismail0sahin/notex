@@ -342,10 +342,22 @@ export function listTasks(db: SQLiteDatabase, planId: number, sinkDone = false) 
  * Yeni görev listenin başına eklenir. Yazma satırı listenin üstünde sabit
  * durduğu için yazılan satırın hemen onun altında görünmesi gerekiyor.
  */
-export function createTask(db: SQLiteDatabase, planId: number, title: string) {
+/**
+ * Yeni görev.
+ *
+ * Varsayılan olarak başa ekleniyor: yazma satırı planın en üstünde sabit
+ * duruyor, yazılan satırın onun hemen altında görünmesi gerekiyor. `atEnd`
+ * çizelgeler için — orada sıra kronolojik, sonradan eklenen satır günün
+ * sonuna gider.
+ */
+export function createTask(db: SQLiteDatabase, planId: number, title: string, atEnd = false) {
+  const position = atEnd
+    ? '(SELECT COALESCE(MAX(position), -1) + 1 FROM tasks WHERE plan_id = ?)'
+    : '(SELECT COALESCE(MIN(position), 0) - 1 FROM tasks WHERE plan_id = ?)';
+
   return db.runAsync(
     `INSERT INTO tasks (plan_id, title, done, created_at, position)
-     VALUES (?, ?, 0, ?, (SELECT COALESCE(MIN(position), 0) - 1 FROM tasks WHERE plan_id = ?))`,
+     VALUES (?, ?, 0, ?, ${position})`,
     planId,
     title,
     now(),

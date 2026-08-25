@@ -3,7 +3,7 @@ import DateTimePicker, {
 } from '@react-native-community/datetimepicker';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { LinearTransition } from 'react-native-reanimated';
 import ReorderableList, {
@@ -68,6 +68,14 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
   const titleRef = useRef('');
   const newTaskRef = useRef('');
   const newTaskInput = useRef<TextInput>(null);
+  const listRef = useRef<FlatList<Task>>(null);
+  // Çizelgede yeni satır alta eklendiği için ekranın dışında kalabiliyor;
+  // liste büyüdüğü anda sona kaydırılsın diye işaret bırakılıyor. Kaydırma
+  // içerik ölçüldükten sonra yapılmalı, `reloadTasks`'in hemen ardından değil.
+  const scrollPendingRef = useRef(false);
+  // Son seçilen saat: bir satırın bitişi çoğunlukla sonrakinin başlangıcı
+  // oluyor, boş bir alana seçici oradan açılıyor.
+  const lastTimeRef = useRef<string | null>(null);
 
   // Sıralama türe bağlı: `sorted` planlarda tamamlananlar alta iner.
   const reloadTasks = useCallback(async () => {
@@ -104,9 +112,14 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
     const value = newTaskRef.current.trim();
     if (!value) return;
 
+    // Çizelgede sıra kronolojik: yeni satır günün sonuna eklenir. Görev ve
+    // alışveriş listelerinde yazma satırının hemen altına, yani başa.
+    const atEnd = kind === 'schedule';
+
     newTaskRef.current = '';
     newTaskInput.current?.clear();
-    await createTask(db, planId, value);
+    scrollPendingRef.current = atEnd;
+    await createTask(db, planId, value, atEnd);
     reloadTasks();
   }
 
@@ -131,6 +144,28 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
     reloadTasks();
   }
 
+  /**
+   * Boş bir saat alanına seçici hangi saatten açılsın.
+   *
+   * Sırayla: alanın kendi değeri, bitiş seçiliyorsa aynı satırın başlangıcı,
+   * bu oturumda en son seçilen saat, plan yeniden açıldıysa listedeki en son
+   * dolu saat. Hiçbiri yoksa `hmToDate(null)` içinde bulunulan saate düşüyor.
+   */
+  function pickerStart(target: TimeTarget) {
+    const own = target.field === 'start' ? target.task.start_time : target.task.end_time;
+    if (own) return own;
+
+    if (target.field === 'end' && target.task.start_time) return target.task.start_time;
+    if (lastTimeRef.current) return lastTimeRef.current;
+
+    for (let index = tasks.length - 1; index >= 0; index -= 1) {
+      const time = tasks[index].end_time ?? tasks[index].start_time;
+      if (time) return time;
+    }
+
+    return null;
+  }
+
   /** Saat seçici kapanınca: seçildiyse yaz, "Temizle"ye basıldıysa boşalt. */
   async function handleTimeChange(event: DateTimePickerEvent, date?: Date) {
     const target = timeTarget;
@@ -139,7 +174,9 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
     if (!target) return;
 
     if (event.type === 'set' && date) {
-      await setTaskTime(db, target.task.id, target.field, dateToHm(date));
+      const time = dateToHm(date);
+      lastTimeRef.current = time;
+      await setTaskTime(db, target.task.id, target.field, time);
     } else if (event.type === 'neutralButtonPressed') {
       await setTaskTime(db, target.task.id, target.field, null);
     } else {
@@ -277,9 +314,17 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
           ) : null}
 
           <ReorderableList
+            ref={listRef}
             data={tasks}
             keyExtractor={(item) => String(item.id)}
             onReorder={handleReorder}
+            // Yalnızca alta eklendikten sonra kaydırıyor; içerik başka bir
+            // sebeple büyüdüğünde (klavye, satır düzenleme) yerinde kalıyor.
+            onContentSizeChange={() => {
+              if (!scrollPendingRef.current) return;
+              scrollPendingRef.current = false;
+              listRef.current?.scrollToEnd({ animated: true });
+            }}
             dragEnabled={list.reordering}
             // Tamamlanan satır `sorted` planlarda alta iner; aniden yer
             // değiştirmesi takip edilemiyordu, kayarak gidiyor. Sıralama
@@ -319,9 +364,7 @@ export function PlanDetail({ planId, onClose }: { planId: number; onClose: () =>
             is24Hour
             // Alarm uygulamalarındaki gibi yukarı aşağı dönen saat/dakika tekerleği.
             display="spinner"
-            value={hmToDate(
-              timeTarget.field === 'start' ? timeTarget.task.start_time : timeTarget.task.end_time
-            )}
+            value={hmToDate(pickerStart(timeTarget))}
             neutralButton={{ label: Strings.common.clearTime }}
             onChange={handleTimeChange}
           />
