@@ -153,13 +153,15 @@ npm script'lerinde `--go` bayrağı gömülü — `npm start` her koşulda Expo 
 
 ### EAS bulut derlemesi (alternatif)
 
-Profiller `eas.json` içinde. Yerel toolchain istemiyorsan:
+Yerel toolchain istemiyorsan derleme Expo'nun sunucularında da yapılabilir.
+Profil dosyası projede tutulmuyor, önce üretilmesi gerekiyor:
 
 ```bash
-npx eas-cli build --profile preview -p android
+npx eas-cli build:configure
 ```
 
-Ücretsiz Expo hesabı gerekiyor ve kaynak kod Expo sunucularına yükleniyor.
+Sonra `npx eas-cli build --profile preview -p android`. Ücretsiz Expo hesabı
+gerekiyor ve kaynak kod Expo sunucularına yükleniyor.
 
 ## Proje yapısı
 

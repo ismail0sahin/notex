@@ -69,7 +69,7 @@ export default function PlansScreen() {
 
   async function addPlan(kind: PlanKind) {
     setAskingKind(false);
-    const id = await createPlan(db, Strings.plans.newTitle, null, kind);
+    const id = await createPlan(db, Strings.plans.newTitle, kind);
     await reload();
     setOpenPlanId(Number(id));
   }

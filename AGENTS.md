@@ -107,6 +107,10 @@ Arayüz metinleri Türkçe.
   'left', 'right']}` kullanıp hesabı açıkça yapıyor: `insets.bottom +
   TabBarHeight`. Sekmeli ekranlarda alt kenarı bazen çubuğun tüketmesi yüzünden
   ne kadar boşluk eklendiği belirsizdi ve `+` düğmesi çubuğun altında kalıyordu.
+- `expo-constants` ve `expo-linking` de hiçbir yerde import edilmiyor ama
+  **kaldırılmamalı**: `expo-router`'ın isteğe bağlı olmayan peer bağımlılıkları ve
+  çalışma anında kendisi import ediyor (`router-store`, `useLinking`). Temizlik
+  taramasında ikisi de "kullanılmıyor" diye görünür.
 - `expo-system-ui` kodda hiçbir yerde import edilmiyor ama **kaldırılmamalı**:
   `app.json`'daki `userInterfaceStyle` ayarının native karşılığını o kuruyor.
   Onsuz cihaz teması doğru okunmuyor ve "Sistem" görünüm seçeneği çalışmıyor.
@@ -139,9 +143,11 @@ Test: Play Store'daki Expo Go SDK 57'ye göredir, bu projeyi açmaz. Telefonda
 Expo Go **54.0.8** elle kurulu ve Play Store otomatik güncellemesi kapalı olmalı:
 `https://github.com/expo/expo-go-releases/releases/download/Expo-Go-54.0.8/Expo-Go-54.0.8.apk`
 
-`eas.json`'daki `development` profili `expo-dev-client` paketini ister; o paket
-kaldırıldı (kurulu olması `npm start`'ı Expo Go yerine geliştirme derlemesi moduna
-çeviriyor). Geliştirme derlemesine dönülürse paket yeniden kurulmalı.
+`eas.json` silindi: derleme yerel Gradle ile yapılıyor, EAS hiç kullanılmadı ve
+dosyadaki `development` profili artık kurulu olmayan `expo-dev-client` paketini
+istiyordu (o paket kurulu olsa `npm start` Expo Go yerine geliştirme derlemesi
+moduna geçer). Buluta dönülürse `npx eas-cli build:configure` dosyayı yeniden
+üretir.
 
 ## Plan türleri
 

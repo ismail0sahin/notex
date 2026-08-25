@@ -285,18 +285,17 @@ export function getPlan(db: SQLiteDatabase, id: number) {
   return db.getFirstAsync<Plan>('SELECT * FROM plans WHERE id = ?', id);
 }
 
-/** Yeni plan listenin başına gelir. */
-export async function createPlan(
-  db: SQLiteDatabase,
-  title: string,
-  dueDate: string | null,
-  kind: PlanKind
-) {
+/**
+ * Yeni plan listenin başına gelir.
+ *
+ * `due_date` NULL kalıyor: kolon duruyor ama arayüzde tarih seçici yok. Tarih
+ * geri istenirse buraya bir parametre eklenir.
+ */
+export async function createPlan(db: SQLiteDatabase, title: string, kind: PlanKind) {
   const result = await db.runAsync(
-    `INSERT INTO plans (title, due_date, kind, created_at, position)
-     VALUES (?, ?, ?, ?, (SELECT COALESCE(MIN(position), 0) - 1 FROM plans))`,
+    `INSERT INTO plans (title, kind, created_at, position)
+     VALUES (?, ?, ?, (SELECT COALESCE(MIN(position), 0) - 1 FROM plans))`,
     title,
-    dueDate,
     kind,
     now()
   );

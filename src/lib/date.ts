@@ -1,13 +1,13 @@
 import { Strings } from '@/constants/strings';
 
 /** Yerel saate göre 'YYYY-MM-DD'. toISOString() UTC'ye kaydırdığı için kullanılmıyor. */
-export function toYmd(date: Date) {
+function toYmd(date: Date) {
   const month = `${date.getMonth() + 1}`.padStart(2, '0');
   const day = `${date.getDate()}`.padStart(2, '0');
   return `${date.getFullYear()}-${month}-${day}`;
 }
 
-export function todayYmd() {
+function todayYmd() {
   return toYmd(new Date());
 }
 

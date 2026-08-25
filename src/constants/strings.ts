@@ -92,7 +92,6 @@ export const Strings = {
     tooShort: (min: number) => `En az ${min} nokta birleştir`,
     mismatch: 'Desenler aynı değil, baştan çiz',
     wrong: 'Desen yanlış',
-    saved: 'Desen kaydedildi',
     notEncrypted: 'Desen notları gizler, şifrelemez.',
   },
 
@@ -117,7 +116,6 @@ export const Strings = {
 
   months: ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'],
   today: 'Bugün',
-  tomorrow: 'Yarın',
 
   /** Ekran okuyucu etiketleri. */
   a11y: {

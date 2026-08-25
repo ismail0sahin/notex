@@ -54,17 +54,6 @@ export type ThemeColors = Record<ThemeColor, string>;
 /** Kullanıcının tema tercihi. `system` cihaz ayarını izler. */
 export type ThemePreference = 'system' | 'light' | 'dark';
 
-export const Fonts = Platform.select({
-  ios: {
-    sans: 'system-ui',
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    mono: 'monospace',
-  },
-});
-
 export const Spacing = {
   half: 2,
   one: 4,
